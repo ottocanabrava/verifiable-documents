@@ -5,18 +5,27 @@ pela coluna `tipo_documento` e devolve o PDF em bytes. Nada é gravado em
 disco: o PDF é sempre gerado sob demanda.
 """
 import io
+import os
 from datetime import date, datetime
 
 from reportlab.pdfgen import canvas
 
 from .templates import TEMPLATES
 
-REQUIRED_FIELDS = ("id", "tipo_documento", "nome", "curso", "carga_horaria", "data_emissao")
-
 MONTHS = (
     "janeiro", "fevereiro", "março", "abril", "maio", "junho",
     "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
 )
+
+# Dados do emissor, lidos de ISSUER_<CHAVE> (ver .env.example).
+ISSUER_KEYS = (
+    "nome", "email", "site", "razao_social", "cnpj", "cidade", "endereco",
+    "signatario", "cargo", "logo", "assinatura",
+)
+
+
+def issuer_from_env():
+    return {k: os.environ.get(f"ISSUER_{k.upper()}", "").strip() for k in ISSUER_KEYS}
 
 
 def parse_date(value):
@@ -37,17 +46,18 @@ def format_date_pt(d):
 
 
 def render(record, issuer):
-    missing = [f for f in REQUIRED_FIELDS if not str(record.get(f, "")).strip()]
-    if missing:
-        raise ValueError(f"campos obrigatórios ausentes: {', '.join(missing)}")
+    data = {k: str(v).strip() for k, v in record.items() if v is not None}
 
-    tipo = str(record["tipo_documento"]).strip()
+    tipo = data.get("tipo_documento", "")
     template = TEMPLATES.get(tipo)
     if template is None:
         raise ValueError(f"tipo_documento desconhecido: {tipo!r}")
 
-    data = {k: str(v).strip() for k, v in record.items()}
-    data["data_emissao_extenso"] = format_date_pt(parse_date(record["data_emissao"]))
+    missing = [f for f in ("id", "data_emissao") + template.REQUIRED if not data.get(f)]
+    if missing:
+        raise ValueError(f"campos obrigatórios ausentes: {', '.join(missing)}")
+
+    data["data_emissao_extenso"] = format_date_pt(parse_date(data["data_emissao"]))
 
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=template.PAGE_SIZE)

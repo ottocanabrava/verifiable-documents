@@ -1,10 +1,12 @@
 """Registro de templates: um módulo por tipo de documento.
 
-Cada módulo expõe `draw(c, record, issuer)`, que desenha uma página no
-canvas do ReportLab. A chave é o valor da coluna `tipo_documento`.
+Cada módulo expõe `PAGE_SIZE`, `REQUIRED` (colunas obrigatórias além de
+`id` e `data_emissao`) e `draw(c, record, issuer)`, que desenha uma página
+no canvas do ReportLab. A chave é o valor da coluna `tipo_documento`.
 """
-from . import certificado_curso
+from . import certificado_curso, declaracao_matricula
 
 TEMPLATES = {
     "certificado_curso": certificado_curso,
+    "declaracao_matricula": declaracao_matricula,
 }
