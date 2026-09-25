@@ -1,5 +1,4 @@
 """Geração e consulta de IDs de validação."""
-import json
 import os
 import re
 import secrets
@@ -25,13 +24,17 @@ def clean_id(raw):
 
 
 def _read_sheet(sheet_id):
-    """Lê a primeira aba de uma planilha do Google, como lista de dicts."""
+    """Lê a primeira aba de uma planilha do Google, como lista de dicts.
+
+    Credencial padrão do Google (sem chave no código): no Cloud Run, a conta
+    de serviço do próprio serviço; localmente, `gcloud auth application-default
+    login`; ou um arquivo de chave em GOOGLE_APPLICATION_CREDENTIALS.
+    """
+    import google.auth
     import gspread
 
-    if os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON"):
-        gc = gspread.service_account_from_dict(json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]))
-    else:
-        gc = gspread.service_account(filename=os.environ["GOOGLE_SERVICE_ACCOUNT_FILE"])
+    creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"])
+    gc = gspread.authorize(creds)
     # Tudo como texto: preserva zeros à esquerda de CPF/RG e IDs numéricos.
     return gc.open_by_key(sheet_id).sheet1.get_all_records(numericise_ignore=["all"])
 

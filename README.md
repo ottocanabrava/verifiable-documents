@@ -159,8 +159,7 @@ Copie `.env.example` para `.env` e preencha. O `.env` está no
 
 | Variável | Descrição |
 |---|---|
-| `GOOGLE_SERVICE_ACCOUNT_FILE` | Caminho do JSON da service account, **fora** do repositório |
-| `GOOGLE_SERVICE_ACCOUNT_JSON` | Alternativa: o conteúdo do JSON numa linha (útil em deploy) |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Opcional: arquivo de chave, **fora** do repositório. Sem ele, usa a credencial padrão do Google (conta de serviço do Cloud Run, ou `gcloud auth application-default login` no computador) |
 | `SHEET_ID` | ID da planilha de documentos (trecho entre `/d/` e `/edit` na URL) |
 | `CONTEUDOS_SHEET_ID` | ID da planilha com o conteúdo dos cursos |
 | `VALIDATION_BASE_URL` | URL pública da página de validação (usada no QR code) |
