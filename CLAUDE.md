@@ -21,6 +21,14 @@ Antes de escrever código, pare no primeiro degrau que resolve:
   segurança (rate limit, IDs não sequenciais, nada de CPF/e-mail na
   resposta), nem o que foi pedido explicitamente.
 
+## Escopo da validação (0.2.0)
+
+- Todos os tipos (certificados e declarações) têm ID, QR code e validação.
+- `/validar` responde só tipo, nome, curso, carga horária e data. Nunca
+  CPF, RG, endereço nem outro dado do aluno.
+- PDF de declaração nunca é servido pela rota pública (contém CPF).
+- Link "Adicionar ao LinkedIn" (0.3.0): só nos certificados.
+
 ## Repositório público
 
 - Só dados fictícios. Nenhum dado real de aluno, nenhuma credencial.

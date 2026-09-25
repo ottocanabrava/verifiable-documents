@@ -3,8 +3,8 @@
 `draw_declaracao` também serve à declaração de término de semestre, que só
 muda título, abertura e situação do aluno.
 
-Contém CPF, RG e endereço do aluno: esse PDF é só para o emissor e nunca
-deve ser servido pela rota pública de validação.
+Contém CPF, RG e endereço do aluno: a declaração é validável pelo ID, mas
+o PDF é só para o emissor e nunca deve ser servido pela rota pública.
 """
 from xml.sax.saxutils import escape
 

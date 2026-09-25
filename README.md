@@ -70,9 +70,10 @@ id | tipo_documento | nome | curso | carga_horaria | data_emissao | status | cpf
 
 `data_emissao` aceita `AAAA-MM-DD` ou `DD/MM/AAAA`.
 
-As declarações contêm CPF, RG e endereço: elas são geradas só para
-o emissor e nunca é servida pela rota pública de validação, que mostra apenas
-nome, curso, carga horária e data.
+Todos os tipos (certificados e declarações) são validáveis pelo ID. A rota
+pública de validação mostra apenas tipo, nome, curso, carga horária e data,
+nunca CPF, RG ou endereço. Como as declarações contêm esses dados, o PDF delas
+é gerado só para o emissor e nunca é servido pela rota pública.
 
 ## Rodando localmente
 
