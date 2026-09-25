@@ -15,16 +15,19 @@ da planilha, identificada por um ID de validação não sequencial.
 |---|---|
 | Motor de PDF + templates `certificado_curso`, `certificado_trimestre` e `certificado_semestre` | ✅ |
 | Templates `declaracao_matricula` e `declaracao_termino_semestre` | ✅ |
-| Leitura do Google Sheets | ⏳ |
-| ID de validação + QR code | ⏳ |
-| Link "Adicionar ao LinkedIn" | ⏳ |
-| Rota `/validar` | ⏳ |
+| Leitura do Google Sheets | ✅ |
+| ID de validação + QR code (todos os tipos) | ✅ |
+| Rota `/validar` com rate limit | ✅ |
+| Link "Adicionar ao LinkedIn" (certificados) | ⏳ |
 
 ## Estrutura
 
 ```
+app.py                 página pública /validar e comandos de emissão
 src/
   engine.py            motor de geração, agnóstico de template
+  validation.py        geração de ID, leitura da planilha e visão pública
+  qr.py                QR code de validação (gerador nativo do ReportLab)
   templates/           um módulo de layout por tipo de documento
     assets/            fundo do certificado e fonte Montserrat (SIL OFL)
 tests/
@@ -42,8 +45,13 @@ As regras aplicadas ficam em [`CLAUDE.md`](CLAUDE.md).
 
 Na prática, neste projeto:
 
-- **Uma dependência de execução** (`reportlab`) nesta etapa. `gspread`,
-  `qrcode` e Flask só entram quando a etapa que usa cada um for construída.
+- **Dependências só quando a etapa precisa:** `reportlab` para o PDF,
+  `gspread` para a planilha, Flask (+ `python-dotenv`, que o Flask já sabe
+  usar para ler o `.env`) para a página. Nenhuma entrou antes da hora.
+- **QR code sem biblioteca nova:** o ReportLab já tem gerador de QR, então o
+  pacote `qrcode` previsto no plano não foi necessário.
+- **Rate limit sem biblioteca nova:** um contador por IP em memória, com o
+  limite documentado no código e o caminho de evolução (Flask-Limiter + Redis).
 - **Uma única abstração:** o registro de templates, usado desde o primeiro
   tipo de documento. Sem classe base, fábrica ou configuração genérica.
 - **Nenhum armazenamento de PDF:** o documento é gerado sob demanda, então
@@ -99,6 +107,28 @@ record = {
 }
 open("exemplo.pdf", "wb").write(render(record, issuer_from_env()))
 ```
+
+## Emitindo e validando
+
+Com o `.env` configurado (o Flask carrega o arquivo sozinho):
+
+```bash
+flask --app app novo-id -n 5    # IDs novos: cole na coluna `id` da planilha
+flask --app app pdf <id>        # gera <id>.pdf com QR de validação
+flask --app app run             # página pública em /validar
+```
+
+O QR code de cada documento aponta para `VALIDATION_BASE_URL?id=<id>` e também
+é um link clicável no PDF. A página de validação:
+
+- rejeita IDs fora do formato antes de consultar a planilha;
+- mostra só tipo, nome, curso, carga horária e data (nunca CPF, RG ou endereço);
+- trata como válido apenas o documento com `status` igual a `ativo`;
+- limita cada IP a 10 consultas por minuto.
+
+Em produção, rode atrás de um servidor WSGI (ex.: `gunicorn app:app`). O rate
+limit fica na memória do processo: com vários workers, troque por
+Flask-Limiter + Redis; atrás de proxy reverso, use `ProxyFix` para o IP real.
 
 ## Variáveis de ambiente
 
