@@ -39,8 +39,8 @@ def body_text(record, issuer):
         f"sito na {escape(issuer['endereco'])}, declara, para os fins que sejam "
         f"necessários, que {_b(record['nome'].upper())}, inscrito(a) no CPF sob o número "
         f"{_b(record['cpf'])} e no RG {_b(record['rg'])}, residente e domiciliado(a) em "
-        f"{_b(record['endereco'].upper())}, está devidamente matriculado(a) no curso de "
-        f"{_b(record['curso'])} da instituição{extras}."
+        f"{_b(record['endereco'].upper())}, está devidamente matriculado(a) no "
+        f"{_b('curso de ' + record['curso'])} da instituição{extras}."
     )
 
 
