@@ -14,7 +14,7 @@ da planilha, identificada por um ID de validação não sequencial.
 | Etapa | Situação |
 |---|---|
 | Motor de PDF + template `certificado_curso` | ✅ |
-| Template `declaracao_matricula` | ✅ |
+| Templates `declaracao_matricula` e `declaracao_termino_semestre` | ✅ |
 | Leitura do Google Sheets | ⏳ |
 | ID de validação + QR code | ⏳ |
 | Link "Adicionar ao LinkedIn" | ⏳ |
@@ -66,10 +66,11 @@ id | tipo_documento | nome | curso | carga_horaria | data_emissao | status | cpf
 |---|---|---|
 | `certificado_curso` | `id`, `nome`, `curso`, `carga_horaria`, `data_emissao` | |
 | `declaracao_matricula` | `id`, `nome`, `curso`, `cpf`, `rg`, `endereco`, `data_emissao` | `dia_aula`, `carga_horaria` |
+| `declaracao_termino_semestre` | mesmas da declaração de matrícula | `dia_aula`, `carga_horaria` |
 
 `data_emissao` aceita `AAAA-MM-DD` ou `DD/MM/AAAA`.
 
-A declaração de matrícula contém CPF, RG e endereço: ela é gerada só para
+As declarações contêm CPF, RG e endereço: elas são geradas só para
 o emissor e nunca é servida pela rota pública de validação, que mostra apenas
 nome, curso, carga horária e data.
 

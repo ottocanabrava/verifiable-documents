@@ -82,6 +82,14 @@ def test_declaracao_contem_campos_esperados():
         assert expected in text
 
 
+def test_declaracao_termino_semestre():
+    record = {**DECLARACAO, "tipo_documento": "declaracao_termino_semestre", "curso": "Inglês"}
+    text = pdf_text(render(record, ISSUER))
+    assert "DECLARAÇÃO DE TÉRMINO DE SEMESTRE" in text
+    assert "declara que o semestre de JOÃO EXEMPLO SOUZA, inscrito(a) no CPF" in text
+    assert "foi concluído no CURSO DE INGLÊS da instituição." in text
+
+
 def test_declaracao_dia_aula_e_carga_horaria_opcionais():
     record = {**DECLARACAO, "dia_aula": "terça-feira, das 19h às 20h30", "carga_horaria": "60"}
     text = pdf_text(render(record, ISSUER))

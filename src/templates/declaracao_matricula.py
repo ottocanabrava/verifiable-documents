@@ -1,5 +1,8 @@
 """Layout da declaração de matrícula (A4 retrato).
 
+`draw_declaracao` também serve à declaração de término de semestre, que só
+muda título, abertura e situação do aluno.
+
 Contém CPF, RG e endereço do aluno: esse PDF é só para o emissor e nunca
 deve ser servido pela rota pública de validação.
 """
@@ -24,7 +27,7 @@ def _b(value):
     return f"<b>{escape(value)}</b>"
 
 
-def body_text(record, issuer):
+def body_text(record, issuer, abertura, situacao):
     extras = []
     if record.get("dia_aula"):
         extras.append(f"com aulas semanais ({escape(record['dia_aula'])})")
@@ -36,15 +39,22 @@ def body_text(record, issuer):
         f"{_b(issuer['razao_social'].upper())}, pessoa jurídica de direito privado, "
         f"mantenedora da {escape(issuer['nome'])}, inscrita no CNPJ sob o número "
         f"{_b(issuer['cnpj'])}, com sede na cidade de {escape(issuer['cidade'])}, "
-        f"sito na {escape(issuer['endereco'])}, declara, para os fins que sejam "
-        f"necessários, que {_b(record['nome'].upper())}, inscrito(a) no CPF sob o número "
+        f"sito na {escape(issuer['endereco'])}, {abertura} "
+        f"{_b(record['nome'].upper())}, inscrito(a) no CPF sob o número "
         f"{_b(record['cpf'])} e no RG {_b(record['rg'])}, residente e domiciliado(a) em "
-        f"{_b(record['endereco'].upper())}, está devidamente matriculado(a) no "
-        f"{_b('curso de ' + record['curso'])} da instituição{extras}."
+        f"{_b(record['endereco'].upper())}, {situacao} da instituição{extras}."
     )
 
 
 def draw(c, record, issuer):
+    draw_declaracao(
+        c, record, issuer, "DECLARAÇÃO DE MATRÍCULA",
+        "declara, para os fins que sejam necessários, que",
+        f"está devidamente matriculado(a) no {_b('curso de ' + record['curso'])}",
+    )
+
+
+def draw_declaracao(c, record, issuer, titulo, abertura, situacao):
     width, height = PAGE_SIZE
     left, right = 28, width - 28
 
@@ -66,9 +76,9 @@ def draw(c, record, issuer):
     c.drawString(split + 7, top - 56, issuer.get("site", ""))
 
     c.setFont("Helvetica-Bold", 10)
-    c.drawCentredString(width / 2, height - 170, "DECLARAÇÃO DE MATRÍCULA")
+    c.drawCentredString(width / 2, height - 170, titulo)
 
-    p = Paragraph(body_text(record, issuer), BODY)
+    p = Paragraph(body_text(record, issuer, abertura, situacao), BODY)
     _, h = p.wrap(right - left, 400)
     p.drawOn(c, left, height - 212 - h)
 
