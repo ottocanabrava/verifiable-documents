@@ -31,7 +31,7 @@ def test_novo_id_formato_unico_e_nao_sequencial():
     assert ids != sorted(ids)
 
 
-@pytest.mark.parametrize("raw", ["", "curto", "k7Qm2xPz9aBc'--", "../../etc/pa", "k7Qm2xPz9aB c", None])
+@pytest.mark.parametrize("raw", ["", "curto", "k7Qm2xPz9aBc'--", "../../etc/pa", "k7Qm2xPz9aB c", "-7Qm2xPz9aBc", None])
 def test_clean_id_rejeita_formato_invalido(raw):
     assert clean_id(raw) is None
 
@@ -140,6 +140,15 @@ def test_integracao_registro_pdf_qr_pagina(client):
 def test_cli_novo_id(client):
     out = app_module.app.test_cli_runner().invoke(args=["novo-id", "-n", "3"]).output.split()
     assert len(out) == 3 and all(ID_PATTERN.fullmatch(i) for i in out)
+
+
+def test_cli_pdf_sem_conteudo_nao_consulta_aba_de_conteudos(client, tmp_path, monkeypatch):
+    def boom():
+        raise AssertionError("não deveria consultar os conteúdos")
+
+    app_module.app.config["LOAD_CONTEUDOS"] = boom
+    monkeypatch.chdir(tmp_path)
+    assert app_module.app.test_cli_runner().invoke(args=["pdf", DECLARACAO["id"]]).exit_code == 0
 
 
 def test_cli_pdf(client, tmp_path, monkeypatch):

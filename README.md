@@ -80,8 +80,9 @@ id | tipo_documento | nome | curso | carga_horaria | data_emissao | status | cpf
 `data_emissao` aceita `AAAA-MM-DD` ou `DD/MM/AAAA`.
 
 O certificado de curso completo tem uma segunda página com o conteúdo do
-curso, lido de outra aba da planilha (`CONTEUDOS_TAB`, padrão `Conteudos`),
-com uma linha por item:
+curso, lido de uma planilha separada (`CONTEUDOS_SHEET_ID`), com uma linha
+por item. Assim quem mantém o currículo não precisa mexer na planilha com
+dados dos alunos:
 
 ```
 curso | semestre | item
@@ -90,7 +91,13 @@ Inglês | 1º semestre | Conversar sobre seus hábitos alimentares.
 ```
 
 O `curso` é comparado sem diferenciar maiúsculas; os itens saem na ordem da
-aba, agrupados por `semestre`. Se o conteúdo for longo, a fonte diminui até
+planilha, agrupados por `semestre`. Curso sem conteúdo cadastrado não gera
+certificado de curso completo (o comando avisa). As duas planilhas são lidas
+pela primeira aba, e a service account precisa ter acesso de leitura a elas
+(compartilhe com o e-mail dela).
+
+Na planilha de documentos, deixe as colunas em **Formatar > Número > Texto
+simples**, para o Sheets não converter datas nem cortar zeros de CPF/RG. Se o conteúdo for longo, a fonte diminui até
 caber em duas colunas.
 
 Todos os tipos (certificados e declarações) são validáveis pelo ID. A rota
@@ -154,9 +161,8 @@ Copie `.env.example` para `.env` e preencha. O `.env` está no
 |---|---|
 | `GOOGLE_SERVICE_ACCOUNT_FILE` | Caminho do JSON da service account, **fora** do repositório |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | Alternativa: o conteúdo do JSON numa linha (útil em deploy) |
-| `SHEET_ID` | ID da planilha (trecho entre `/d/` e `/edit` na URL) |
-| `SHEET_TAB` | Nome da aba com os dados |
-| `CONTEUDOS_TAB` | Nome da aba com o conteúdo dos cursos (padrão `Conteudos`) |
+| `SHEET_ID` | ID da planilha de documentos (trecho entre `/d/` e `/edit` na URL) |
+| `CONTEUDOS_SHEET_ID` | ID da planilha com o conteúdo dos cursos |
 | `VALIDATION_BASE_URL` | URL pública da página de validação (usada no QR code) |
 | `ISSUER_NOME`, `ISSUER_EMAIL`, `ISSUER_SITE` | Nome e contato da instituição (cabeçalho e assinatura) |
 | `ISSUER_RAZAO_SOCIAL`, `ISSUER_CNPJ`, `ISSUER_CIDADE`, `ISSUER_ENDERECO` | Dados da mantenedora, usados no texto da declaração |
