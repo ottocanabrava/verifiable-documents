@@ -107,6 +107,16 @@ def test_campo_obrigatorio_ausente(record, campo):
         render({**record, campo: "  "}, ISSUER)
 
 
+@pytest.mark.parametrize("record", [CERTIFICADO, DECLARACAO])
+def test_imagens_do_emissor(record, tmp_path):
+    from PIL import Image
+
+    img = tmp_path / "img.png"
+    Image.new("RGBA", (40, 20), (255, 255, 255, 0)).save(img)
+    issuer = {**ISSUER, "logo": str(img), "logo_branco": str(img), "assinatura": str(img)}
+    assert render(record, issuer).startswith(b"%PDF")
+
+
 @pytest.mark.parametrize("raw", ["2026-03-15", "15/03/2026"])
 def test_parse_date_formatos(raw):
     assert format_date_pt(parse_date(raw)) == "15 de março de 2026"

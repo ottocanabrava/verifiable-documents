@@ -43,11 +43,15 @@ def draw(c, record, issuer):
     # Fundo: faixa roxa (61% superior) e base branca.
     c.drawImage(str(BACKGROUND), 0, 0, width, height)
 
-    _centered(c, "CERTIFICADO DE CONCLUSÃO", "Montserrat-Bold", 18, height - 70, white)
-    _centered(c, "Certificamos que", "Montserrat-Regular", 14, height - 120, white)
-    _centered(c, record["nome"], "Montserrat-Bold", 32, height - 165, white, text_width, 16)
-    _centered(c, "concluiu o curso de", "Montserrat-Regular", 14, height - 205, white)
-    _centered(c, record["curso"].upper(), "Montserrat-ExtraBold", 96, height - 310, ORANGE, text_width, 28)
+    # Logo claro para o fundo roxo (opcional, fora do repositório)
+    if issuer.get("logo_branco"):
+        c.drawImage(issuer["logo_branco"], cx - 60, height - 75, 120, 50, preserveAspectRatio=True, mask="auto")
+
+    _centered(c, "CERTIFICADO DE CONCLUSÃO", "Montserrat-Bold", 18, height - 110, white)
+    _centered(c, "Certificamos que", "Montserrat-Regular", 13, height - 145, white)
+    _centered(c, record["nome"], "Montserrat-Bold", 30, height - 183, white, text_width, 16)
+    _centered(c, "concluiu o curso de", "Montserrat-Regular", 13, height - 215, white)
+    _centered(c, record["curso"].upper(), "Montserrat-ExtraBold", 88, height - 318, ORANGE, text_width, 28)
 
     _centered(
         c,

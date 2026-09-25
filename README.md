@@ -113,7 +113,7 @@ Copie `.env.example` para `.env` e preencha. O `.env` está no
 | `ISSUER_NOME`, `ISSUER_EMAIL`, `ISSUER_SITE` | Nome e contato da instituição (cabeçalho e assinatura) |
 | `ISSUER_RAZAO_SOCIAL`, `ISSUER_CNPJ`, `ISSUER_CIDADE`, `ISSUER_ENDERECO` | Dados da mantenedora, usados no texto da declaração |
 | `ISSUER_SIGNATARIO`, `ISSUER_CARGO` | Quem assina os documentos |
-| `ISSUER_LOGO`, `ISSUER_ASSINATURA` | Caminhos das imagens de logo e assinatura, **fora** do repositório (opcionais) |
+| `ISSUER_LOGO`, `ISSUER_LOGO_BRANCO`, `ISSUER_ASSINATURA` | Caminhos das imagens (logo colorido para a declaração, logo claro para o fundo roxo do certificado, assinatura), **fora** do repositório (opcionais) |
 | `LINKEDIN_ORGANIZATION_ID` | ID da organização no LinkedIn (opcional) |
 
 ## Adicionando um novo tipo de documento
