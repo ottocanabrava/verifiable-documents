@@ -1,0 +1,29 @@
+# Segredos e credenciais
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*.json
+service_account*.json
+*-sa.json
+secrets/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Saídas geradas (PDF é sempre gerado sob demanda)
+*.pdf
+output/
+
+# Editor / SO
+.vscode/
+.idea/
+.DS_Store
