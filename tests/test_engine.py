@@ -61,6 +61,12 @@ def test_certificado_contem_campos_esperados():
         assert expected in text
 
 
+@pytest.mark.parametrize("periodo", ["trimestre", "semestre"])
+def test_certificado_por_periodo(periodo):
+    text = pdf_text(render({**CERTIFICADO, "tipo_documento": f"certificado_{periodo}"}, ISSUER))
+    assert f"concluiu o {periodo} do curso de INGLÊS" in text
+
+
 def test_certificado_curso_longo_nao_perde_texto():
     record = {**CERTIFICADO, "curso": "Inglês para Negócios Avançado"}
     assert "INGLÊS PARA NEGÓCIOS AVANÇADO" in pdf_text(render(record, ISSUER))

@@ -13,7 +13,7 @@ da planilha, identificada por um ID de validação não sequencial.
 
 | Etapa | Situação |
 |---|---|
-| Motor de PDF + template `certificado_curso` | ✅ |
+| Motor de PDF + templates `certificado_curso`, `certificado_trimestre` e `certificado_semestre` | ✅ |
 | Templates `declaracao_matricula` e `declaracao_termino_semestre` | ✅ |
 | Leitura do Google Sheets | ⏳ |
 | ID de validação + QR code | ⏳ |
@@ -64,7 +64,7 @@ id | tipo_documento | nome | curso | carga_horaria | data_emissao | status | cpf
 
 | `tipo_documento` | Obrigatórias | Opcionais |
 |---|---|---|
-| `certificado_curso` | `id`, `nome`, `curso`, `carga_horaria`, `data_emissao` | |
+| `certificado_curso`, `certificado_trimestre`, `certificado_semestre` | `id`, `nome`, `curso`, `carga_horaria`, `data_emissao` | |
 | `declaracao_matricula` | `id`, `nome`, `curso`, `cpf`, `rg`, `endereco`, `data_emissao` | `dia_aula`, `carga_horaria` |
 | `declaracao_termino_semestre` | mesmas da declaração de matrícula | `dia_aula`, `carga_horaria` |
 

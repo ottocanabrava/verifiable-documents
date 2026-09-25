@@ -1,4 +1,8 @@
-"""Layout do certificado de conclusão de curso (A4 paisagem)."""
+"""Layout do certificado de conclusão (A4 paisagem).
+
+`draw_certificado` também serve aos certificados de trimestre e de semestre,
+que só mudam a frase antes do nome do curso.
+"""
 from pathlib import Path
 
 from reportlab.lib.colors import HexColor, white
@@ -36,6 +40,10 @@ def _centered(c, text, font, size, y, color, max_width=None, min_size=None):
 
 
 def draw(c, record, issuer):
+    draw_certificado(c, record, issuer, "concluiu o curso de")
+
+
+def draw_certificado(c, record, issuer, conclusao):
     width, height = PAGE_SIZE
     cx = width / 2
     text_width = width - 120
@@ -50,7 +58,7 @@ def draw(c, record, issuer):
     _centered(c, "CERTIFICADO DE CONCLUSÃO", "Montserrat-Bold", 18, height - 110, white)
     _centered(c, "Certificamos que", "Montserrat-Regular", 13, height - 145, white)
     _centered(c, record["nome"], "Montserrat-Bold", 30, height - 183, white, text_width, 16)
-    _centered(c, "concluiu o curso de", "Montserrat-Regular", 13, height - 215, white)
+    _centered(c, conclusao, "Montserrat-Regular", 13, height - 215, white)
     _centered(c, record["curso"].upper(), "Montserrat-ExtraBold", 88, height - 318, ORANGE, text_width, 28)
 
     _centered(
