@@ -154,6 +154,8 @@ O QR code de cada documento aponta para `VALIDATION_BASE_URL?id=<id>` e também
 - trata como válido apenas o documento com `status` igual a `ativo`;
 - limita cada IP a 10 consultas por minuto.
 
+Para publicar no Google Cloud Run, siga [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
 Em produção, rode atrás de um servidor WSGI (ex.: `gunicorn app:app`). O rate
 limit fica na memória do processo: com vários workers, troque por
 Flask-Limiter + Redis; atrás de proxy reverso, use `ProxyFix` para o IP real.

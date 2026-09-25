@@ -230,3 +230,21 @@ def test_emitir_pdf_com_erro_na_planilha_mostra_motivo(admin):
     app_module.app.config["LOAD_CONTEUDOS"] = lambda: []  # curso sem conteúdo cadastrado
     r = admin.get("/emitir/k7Qm2xPz9aBc.pdf", headers=auth())
     assert r.status_code == 422 and "conteudo" in r.get_data(as_text=True)
+
+
+def test_no_cloud_run_rate_limit_usa_ip_real(monkeypatch):
+    import importlib
+
+    monkeypatch.setenv("K_SERVICE", "certificados")
+    mod = importlib.reload(app_module)
+    try:
+        mod.app.config["LOAD_RECORDS"] = lambda: RECORDS
+        c = mod.app.test_client()
+        for _ in range(mod.RATE_LIMIT):
+            c.get("/validar?id=naoExiste123", headers={"X-Forwarded-For": "1.1.1.1"})
+        # outro visitante (IP real diferente) não é afetado pelo limite do primeiro
+        assert c.get("/validar?id=naoExiste123", headers={"X-Forwarded-For": "2.2.2.2"}).status_code == 404
+        assert c.get("/validar?id=naoExiste123", headers={"X-Forwarded-For": "1.1.1.1"}).status_code == 429
+    finally:
+        monkeypatch.delenv("K_SERVICE")
+        importlib.reload(app_module)

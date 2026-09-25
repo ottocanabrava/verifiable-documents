@@ -11,6 +11,7 @@ import time
 
 import click
 from flask import Flask, Response, abort, render_template_string, request, send_file
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from src.engine import issuer_from_env, render
 from src.templates import TEMPLATES
@@ -19,6 +20,12 @@ from src.validation import clean_id, conteudo_do_curso, find, load_conteudos, lo
 app = Flask(__name__)
 app.config["LOAD_RECORDS"] = load_records
 app.config["LOAD_CONTEUDOS"] = load_conteudos
+
+# No Cloud Run (que define K_SERVICE) o acesso chega pelo proxy do Google: o IP
+# real do visitante é o último do X-Forwarded-For. Sem isso, o rate limit veria
+# todo mundo com o mesmo IP. Fora do Cloud Run, o cabeçalho é ignorado.
+if os.environ.get("K_SERVICE"):
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
 
 RATE_LIMIT = 10  # consultas por minuto, por IP
 _hits = {}
