@@ -25,3 +25,10 @@ Antes de escrever código, pare no primeiro degrau que resolve:
 
 - Só dados fictícios. Nenhum dado real de aluno, nenhuma credencial.
 - Credenciais só via variável de ambiente (ver `.env.example`).
+
+## Versionamento
+
+- SemVer, controle interno. Sem release formal, sem publicar em lugar nenhum.
+- Sobe a versão só em marco real: 0.2.0 = validação por QR funcionando,
+  0.3.0 = link do LinkedIn funcionando.
+- Cada marco: uma linha no `CHANGELOG.md` + `git tag vX.Y.Z` no commit dessa linha.
