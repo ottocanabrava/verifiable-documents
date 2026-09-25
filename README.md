@@ -14,6 +14,7 @@ da planilha, identificada por um ID de validação não sequencial.
 | Etapa | Situação |
 |---|---|
 | Motor de PDF + template `certificado_curso` | ✅ |
+| Template `declaracao_matricula` | ✅ |
 | Leitura do Google Sheets | ⏳ |
 | ID de validação + QR code | ⏳ |
 | Link "Adicionar ao LinkedIn" | ⏳ |
@@ -25,6 +26,7 @@ da planilha, identificada por um ID de validação não sequencial.
 src/
   engine.py            motor de geração, agnóstico de template
   templates/           um módulo de layout por tipo de documento
+    assets/            fundo do certificado e fonte Montserrat (SIL OFL)
 tests/
 CLAUDE.md              regras de desenvolvimento (Ponytail)
 .env.example           variáveis de ambiente necessárias (sem valores reais)
@@ -53,14 +55,23 @@ Na prática, neste projeto:
 
 ## Planilha
 
-Uma linha por documento, com as colunas:
+Uma linha por documento. O valor de `tipo_documento` escolhe o template;
+colunas que um tipo não usa ficam em branco.
 
 ```
-id | tipo_documento | nome | curso | carga_horaria | data_emissao | status
+id | tipo_documento | nome | curso | carga_horaria | data_emissao | status | cpf | rg | endereco | dia_aula
 ```
 
-`data_emissao` aceita `AAAA-MM-DD` ou `DD/MM/AAAA`. O valor de
-`tipo_documento` escolhe o template (ex.: `certificado_curso`).
+| `tipo_documento` | Obrigatórias | Opcionais |
+|---|---|---|
+| `certificado_curso` | `id`, `nome`, `curso`, `carga_horaria`, `data_emissao` | |
+| `declaracao_matricula` | `id`, `nome`, `curso`, `cpf`, `rg`, `endereco`, `data_emissao` | `dia_aula`, `carga_horaria` |
+
+`data_emissao` aceita `AAAA-MM-DD` ou `DD/MM/AAAA`.
+
+A declaração de matrícula contém CPF, RG e endereço: ela é gerada só para
+o emissor e nunca é servida pela rota pública de validação, que mostra apenas
+nome, curso, carga horária e data.
 
 ## Rodando localmente
 
@@ -74,17 +85,17 @@ pytest
 Gerando um PDF de exemplo:
 
 ```python
-from src.engine import render
+from src.engine import issuer_from_env, render
 
 record = {
     "id": "k7Qm2xPz9aBc",
     "tipo_documento": "certificado_curso",
     "nome": "Maria Exemplo da Silva",
-    "curso": "Introdução à Análise de Dados",
+    "curso": "Inglês",
     "carga_horaria": "40",
     "data_emissao": "15/03/2026",
 }
-open("exemplo.pdf", "wb").write(render(record, issuer="Escola Exemplo"))
+open("exemplo.pdf", "wb").write(render(record, issuer_from_env()))
 ```
 
 ## Variáveis de ambiente
@@ -99,11 +110,15 @@ Copie `.env.example` para `.env` e preencha. O `.env` está no
 | `SHEET_ID` | ID da planilha (trecho entre `/d/` e `/edit` na URL) |
 | `SHEET_TAB` | Nome da aba com os dados |
 | `VALIDATION_BASE_URL` | URL pública da página de validação (usada no QR code) |
-| `ISSUER_NAME` | Nome da instituição emissora |
+| `ISSUER_NOME`, `ISSUER_EMAIL`, `ISSUER_SITE` | Nome e contato da instituição (cabeçalho e assinatura) |
+| `ISSUER_RAZAO_SOCIAL`, `ISSUER_CNPJ`, `ISSUER_CIDADE`, `ISSUER_ENDERECO` | Dados da mantenedora, usados no texto da declaração |
+| `ISSUER_SIGNATARIO`, `ISSUER_CARGO` | Quem assina os documentos |
+| `ISSUER_LOGO`, `ISSUER_ASSINATURA` | Caminhos das imagens de logo e assinatura, **fora** do repositório (opcionais) |
 | `LINKEDIN_ORGANIZATION_ID` | ID da organização no LinkedIn (opcional) |
 
 ## Adicionando um novo tipo de documento
 
-1. Crie `src/templates/<tipo>.py` com `PAGE_SIZE` e `draw(c, record, issuer)`.
+1. Crie `src/templates/<tipo>.py` com `PAGE_SIZE`, `REQUIRED` (colunas
+   obrigatórias) e `draw(c, record, issuer)`.
 2. Registre o módulo em `TEMPLATES`, em `src/templates/__init__.py`.
 3. Use `<tipo>` na coluna `tipo_documento` da planilha.
