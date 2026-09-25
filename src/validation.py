@@ -21,17 +21,35 @@ def clean_id(raw):
     return raw if ID_PATTERN.fullmatch(raw) else None
 
 
-def load_records():
-    """Lê todas as linhas da planilha configurada no ambiente."""
+def _read_tab(tab):
+    """Lê uma aba da planilha configurada no ambiente, como lista de dicts."""
     import gspread
 
     if os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON"):
         gc = gspread.service_account_from_dict(json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]))
     else:
         gc = gspread.service_account(filename=os.environ["GOOGLE_SERVICE_ACCOUNT_FILE"])
-    sheet = gc.open_by_key(os.environ["SHEET_ID"]).worksheet(os.environ.get("SHEET_TAB", "Certificados"))
     # Tudo como texto: preserva zeros à esquerda de CPF/RG e IDs numéricos.
-    return sheet.get_all_records(numericise_ignore=["all"])
+    return gc.open_by_key(os.environ["SHEET_ID"]).worksheet(tab).get_all_records(numericise_ignore=["all"])
+
+
+def load_records():
+    return _read_tab(os.environ.get("SHEET_TAB", "Certificados"))
+
+
+def load_conteudos():
+    """Aba com o conteúdo de cada curso: colunas curso | semestre | item."""
+    return _read_tab(os.environ.get("CONTEUDOS_TAB", "Conteudos"))
+
+
+def conteudo_do_curso(rows, curso):
+    """[(semestre, item), ...] do curso, na ordem da planilha."""
+    key = str(curso).strip().casefold()
+    return [
+        (str(r.get("semestre", "")).strip(), str(r["item"]).strip())
+        for r in rows
+        if str(r.get("curso", "")).strip().casefold() == key and str(r.get("item", "")).strip()
+    ]
 
 
 def find(records, doc_id):

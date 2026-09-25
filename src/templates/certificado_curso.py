@@ -1,20 +1,24 @@
 """Layout do certificado de conclusão (A4 paisagem).
 
 `draw_certificado` também serve aos certificados de trimestre e de semestre,
-que só mudam a frase antes do nome do curso.
+que só mudam a frase antes do nome do curso. O de curso completo ganha uma
+segunda página com o conteúdo do curso (`record["conteudo"]`).
 """
+from xml.sax.saxutils import escape
 from pathlib import Path
 
 from reportlab.lib.colors import HexColor, white
 from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.platypus import Paragraph
 
 from ..qr import draw_qr
 
 NOME = "Certificado de conclusão de curso"
 PAGE_SIZE = landscape(A4)
-REQUIRED = ("nome", "curso", "carga_horaria")
+REQUIRED = ("nome", "curso", "carga_horaria", "conteudo")
 
 ASSETS = Path(__file__).parent / "assets"
 BACKGROUND = ASSETS / "fundo_certificado.png"
@@ -23,6 +27,7 @@ for _weight in ("Regular", "Bold", "ExtraBold"):
     pdfmetrics.registerFont(TTFont(f"Montserrat-{_weight}", ASSETS / "fonts" / f"Montserrat-{_weight}.ttf"))
 
 ORANGE = HexColor("#EE791E")
+PURPLE = HexColor("#36296C")
 TEXT = HexColor("#2B2440")
 MUTED = HexColor("#6B6780")
 
@@ -56,6 +61,8 @@ def _centered(c, text, font, size, y, color, max_width=None, min_size=None, trac
 
 def draw(c, record, issuer):
     draw_certificado(c, record, issuer, "concluiu o curso de")
+    c.showPage()
+    draw_conteudo(c, record, issuer)
 
 
 def draw_certificado(c, record, issuer, conclusao):
@@ -102,3 +109,83 @@ def draw_certificado(c, record, issuer, conclusao):
         draw_qr(c, record["validacao_url"], width - 30 - 56, 34, 56)
         c.setFont("Montserrat-Regular", 6.5)
         c.drawCentredString(width - 30 - 28, 24, "Verifique a autenticidade")
+
+
+def _conteudo_blocks(conteudo, size):
+    """[(parágrafo, espaço antes, preso ao próximo)] para a lista de conteúdo."""
+    heading = ParagraphStyle("h", fontName="Montserrat-Bold", fontSize=size + 1, leading=size * 1.5, textColor=PURPLE)
+    item = ParagraphStyle("i", fontName="Montserrat-Regular", fontSize=size, leading=size * 1.35,
+                          textColor=TEXT, leftIndent=10, bulletIndent=0)
+    blocks, grupo = [], None
+    for semestre, texto in conteudo:
+        if semestre != grupo:
+            grupo = semestre
+            blocks.append((Paragraph(escape(semestre), heading), size if blocks else 0, True))
+        blocks.append((Paragraph(escape(texto), item, bulletText="•"), size * 0.2, False))
+    return blocks
+
+
+def _flow(blocks, rects, c=None):
+    """Preenche as colunas de cima para baixo. Devolve False se não couber.
+
+    Sem `c`, só mede. Um título nunca fica sozinho no fim da coluna.
+    """
+    col, y = 0, None
+    i = 0
+    while i < len(blocks):
+        x, bottom, w, h = rects[col]
+        y = bottom + h if y is None else y
+        para, before, keep = blocks[i]
+        need = para.wrap(w, h)[1] + (0 if y == bottom + h else before)
+        if keep and i + 1 < len(blocks):
+            need += blocks[i + 1][0].wrap(w, h)[1] + blocks[i + 1][1]
+        if y - need < bottom:
+            col, y = col + 1, None
+            if col == len(rects):
+                return False
+            continue
+        y -= 0 if y == bottom + h else before
+        ph = para.wrap(w, h)[1]
+        if c is not None:
+            para.drawOn(c, x, y - ph)
+        y -= ph
+        i += 1
+    return True
+
+
+def draw_conteudo(c, record, issuer):
+    width, height = PAGE_SIZE
+    strip = 96
+
+    # Cabeçalho: o topo do próprio fundo, recortado (sem elementos novos).
+    c.saveState()
+    path = c.beginPath()
+    path.rect(0, height - strip, width, strip)
+    c.clipPath(path, stroke=0, fill=0)
+    c.drawImage(str(BACKGROUND), 0, 0, width, height)
+    c.restoreState()
+    _centered(c, "CONTEÚDO PROGRAMÁTICO", "Montserrat-Bold", 11, height - 42, white, tracking=3)
+    _centered(c, record["curso"].upper(), "Montserrat-ExtraBold", 24, height - 76, ORANGE, tracking=2)
+
+    _centered(
+        c,
+        f"Conteúdos abordados no curso de {record['curso']}, com carga horária total de "
+        f"{record['carga_horaria']} horas.",
+        "Montserrat-Regular", 10.5, height - strip - 30, TEXT, width - 120, 8,
+    )
+
+    # Duas colunas; se o conteúdo não couber, a fonte diminui até 7 pt.
+    top, bottom, margin, gap = height - strip - 48, 48, 60, 36
+    col_w = (width - 2 * margin - gap) / 2
+    rects = [(margin + i * (col_w + gap), bottom, col_w, top - bottom) for i in (0, 1)]
+    for size in (10, 9.5, 9, 8.5, 8, 7.5, 7):
+        blocks = _conteudo_blocks(record["conteudo"], size)
+        if _flow(blocks, rects):
+            _flow(blocks, rects, c)
+            break
+    else:
+        raise ValueError("conteúdo do curso não cabe na segunda página")
+
+    c.setFont("Montserrat-Regular", 7.5)
+    c.setFillColor(MUTED)
+    c.drawString(30, 24, f"Anexo do certificado de {record['nome']} · ID de validação: {record['id']}")

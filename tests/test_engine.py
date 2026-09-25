@@ -18,6 +18,13 @@ ISSUER = {
     "cargo": "Diretora Pedagógica",
 }
 
+# Conteúdo fictício com o volume de um curso real: 4 semestres x 12 itens.
+CONTEUDO = [
+    (f"{s}º semestre", f"Tópico fictício {i} do {s}º semestre: conversar sobre um tema do cotidiano.")
+    for s in range(1, 5)
+    for i in range(1, 13)
+]
+
 CERTIFICADO = {
     "id": "k7Qm2xPz9aBc",
     "tipo_documento": "certificado_curso",
@@ -26,6 +33,7 @@ CERTIFICADO = {
     "carga_horaria": "40",
     "data_emissao": "15/03/2026",
     "status": "ativo",
+    "conteudo": CONTEUDO,
 }
 
 DECLARACAO = {
@@ -65,6 +73,33 @@ def test_certificado_contem_campos_esperados():
 def test_certificado_por_periodo(periodo):
     text = pdf_text(render({**CERTIFICADO, "tipo_documento": f"certificado_{periodo}"}, ISSUER))
     assert f"concluiu o {periodo} do curso de INGLÊS" in text
+
+
+def test_certificado_curso_tem_pagina_de_conteudo():
+    reader = PdfReader(io.BytesIO(render(CERTIFICADO, ISSUER)))
+    assert len(reader.pages) == 2
+    page2 = " ".join(reader.pages[1].extract_text().split())
+    assert "CONTEÚDO PROGRAMÁTICO" in page2 and "carga horária total de 40 horas" in page2
+    for s in range(1, 5):
+        assert f"{s}º semestre" in page2
+        assert f"Tópico fictício 12 do {s}º semestre" in page2
+    assert "Anexo do certificado de Maria Exemplo da Silva" in page2
+
+
+def test_certificado_de_periodo_tem_uma_pagina():
+    pdf = render({**CERTIFICADO, "tipo_documento": "certificado_semestre", "conteudo": []}, ISSUER)
+    assert len(PdfReader(io.BytesIO(pdf)).pages) == 1
+
+
+def test_certificado_curso_sem_conteudo():
+    with pytest.raises(ValueError, match="conteudo"):
+        render({**CERTIFICADO, "conteudo": []}, ISSUER)
+
+
+def test_conteudo_que_nao_cabe():
+    enorme = [("1º semestre", "Item muito longo " * 20)] * 60
+    with pytest.raises(ValueError, match="não cabe"):
+        render({**CERTIFICADO, "conteudo": enorme}, ISSUER)
 
 
 def test_certificado_curso_longo_nao_perde_texto():

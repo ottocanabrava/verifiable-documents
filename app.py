@@ -11,10 +11,11 @@ import click
 from flask import Flask, render_template_string, request
 
 from src.engine import issuer_from_env, render
-from src.validation import clean_id, find, load_records, new_id, public_view
+from src.validation import clean_id, conteudo_do_curso, find, load_conteudos, load_records, new_id, public_view
 
 app = Flask(__name__)
 app.config["LOAD_RECORDS"] = load_records
+app.config["LOAD_CONTEUDOS"] = load_conteudos
 
 RATE_LIMIT = 10  # consultas por minuto, por IP
 _hits = {}
@@ -135,6 +136,7 @@ def gerar_pdf(doc_id):
     record = find(app.config["LOAD_RECORDS"](), doc_id)
     if record is None:
         raise click.ClickException("documento não encontrado")
+    record = {**record, "conteudo": conteudo_do_curso(app.config["LOAD_CONTEUDOS"](), record.get("curso", ""))}
     pdf = render(record, issuer_from_env(), os.environ.get("VALIDATION_BASE_URL", ""))
     path = f"{clean_id(doc_id)}.pdf"
     with open(path, "wb") as f:

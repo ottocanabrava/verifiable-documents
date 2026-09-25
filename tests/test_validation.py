@@ -6,8 +6,14 @@ from pypdf import PdfReader
 
 import app as app_module
 from src.engine import render
-from src.validation import ID_PATTERN, clean_id, find, new_id, public_view
-from tests.test_engine import CERTIFICADO, DECLARACAO, ISSUER
+from src.validation import ID_PATTERN, clean_id, conteudo_do_curso, find, new_id, public_view
+from tests.test_engine import CERTIFICADO, CONTEUDO, DECLARACAO, ISSUER
+
+# Aba "Conteudos" como o gspread devolve: uma linha por item.
+CONTEUDO_ROWS = [{"curso": "Inglês", "semestre": s, "item": i} for s, i in CONTEUDO] + [
+    {"curso": "Espanhol", "semestre": "1º semestre", "item": "Tópico de outro curso"},
+    {"curso": "Inglês", "semestre": "1º semestre", "item": "  "},
+]
 
 RECORDS = [
     CERTIFICADO,
@@ -57,6 +63,11 @@ def test_id_inexistente_retorna_none_sem_excecao():
     assert find(RECORDS, "formato inválido") is None
 
 
+def test_conteudo_do_curso_filtra_e_mantem_ordem():
+    assert conteudo_do_curso(CONTEUDO_ROWS, " inglês ") == CONTEUDO
+    assert conteudo_do_curso(CONTEUDO_ROWS, "Alemão") == []
+
+
 def test_status_diferente_de_ativo_nao_e_valido():
     assert public_view(find(RECORDS, "RevogadoXXXX"))["valido"] is False
 
@@ -66,6 +77,7 @@ def test_status_diferente_de_ativo_nao_e_valido():
 @pytest.fixture
 def client():
     app_module.app.config["LOAD_RECORDS"] = lambda: RECORDS
+    app_module.app.config["LOAD_CONTEUDOS"] = lambda: CONTEUDO_ROWS
     app_module._hits.clear()
     return app_module.app.test_client()
 
@@ -136,5 +148,6 @@ def test_cli_pdf(client, tmp_path, monkeypatch):
         monkeypatch.setenv(f"ISSUER_{k.upper()}", v)
     runner = app_module.app.test_cli_runner()
     assert runner.invoke(args=["pdf", "k7Qm2xPz9aBc"]).exit_code == 0
-    assert (tmp_path / "k7Qm2xPz9aBc.pdf").read_bytes().startswith(b"%PDF")
+    pdf = (tmp_path / "k7Qm2xPz9aBc.pdf").read_bytes()
+    assert len(PdfReader(io.BytesIO(pdf)).pages) == 2  # conteúdo veio da aba "Conteudos"
     assert runner.invoke(args=["pdf", "naoExiste123"]).exit_code != 0

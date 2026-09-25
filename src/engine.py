@@ -48,7 +48,8 @@ def format_date_pt(d):
 
 def render(record, issuer, validation_base=""):
     """PDF em bytes. Com `validation_base`, o documento ganha QR de validação."""
-    data = {k: str(v).strip() for k, v in record.items() if v is not None}
+    # Listas (ex.: `conteudo` do curso) passam direto; o resto vira texto.
+    data = {k: v if isinstance(v, list) else str(v).strip() for k, v in record.items() if v is not None}
 
     tipo = data.get("tipo_documento", "")
     template = TEMPLATES.get(tipo)

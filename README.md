@@ -72,11 +72,26 @@ id | tipo_documento | nome | curso | carga_horaria | data_emissao | status | cpf
 
 | `tipo_documento` | Obrigatórias | Opcionais |
 |---|---|---|
-| `certificado_curso`, `certificado_trimestre`, `certificado_semestre` | `id`, `nome`, `curso`, `carga_horaria`, `data_emissao` | |
+| `certificado_curso` | `id`, `nome`, `curso`, `carga_horaria`, `data_emissao` + conteúdo do curso na aba `Conteudos` | |
+| `certificado_trimestre`, `certificado_semestre` | `id`, `nome`, `curso`, `carga_horaria`, `data_emissao` | |
 | `declaracao_matricula` | `id`, `nome`, `curso`, `cpf`, `rg`, `endereco`, `data_emissao` | `dia_aula`, `carga_horaria` |
 | `declaracao_termino_semestre` | mesmas da declaração de matrícula | `dia_aula`, `carga_horaria` |
 
 `data_emissao` aceita `AAAA-MM-DD` ou `DD/MM/AAAA`.
+
+O certificado de curso completo tem uma segunda página com o conteúdo do
+curso, lido de outra aba da planilha (`CONTEUDOS_TAB`, padrão `Conteudos`),
+com uma linha por item:
+
+```
+curso | semestre | item
+Inglês | 1º semestre | Apresentar-se e puxar uma conversa inicial.
+Inglês | 1º semestre | Conversar sobre seus hábitos alimentares.
+```
+
+O `curso` é comparado sem diferenciar maiúsculas; os itens saem na ordem da
+aba, agrupados por `semestre`. Se o conteúdo for longo, a fonte diminui até
+caber em duas colunas.
 
 Todos os tipos (certificados e declarações) são validáveis pelo ID. A rota
 pública de validação mostra apenas tipo, nome, curso, carga horária e data,
@@ -99,7 +114,7 @@ from src.engine import issuer_from_env, render
 
 record = {
     "id": "k7Qm2xPz9aBc",
-    "tipo_documento": "certificado_curso",
+    "tipo_documento": "certificado_semestre",
     "nome": "Maria Exemplo da Silva",
     "curso": "Inglês",
     "carga_horaria": "40",
@@ -141,6 +156,7 @@ Copie `.env.example` para `.env` e preencha. O `.env` está no
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | Alternativa: o conteúdo do JSON numa linha (útil em deploy) |
 | `SHEET_ID` | ID da planilha (trecho entre `/d/` e `/edit` na URL) |
 | `SHEET_TAB` | Nome da aba com os dados |
+| `CONTEUDOS_TAB` | Nome da aba com o conteúdo dos cursos (padrão `Conteudos`) |
 | `VALIDATION_BASE_URL` | URL pública da página de validação (usada no QR code) |
 | `ISSUER_NOME`, `ISSUER_EMAIL`, `ISSUER_SITE` | Nome e contato da instituição (cabeçalho e assinatura) |
 | `ISSUER_RAZAO_SOCIAL`, `ISSUER_CNPJ`, `ISSUER_CIDADE`, `ISSUER_ENDERECO` | Dados da mantenedora, usados no texto da declaração |
