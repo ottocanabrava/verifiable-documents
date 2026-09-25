@@ -19,10 +19,6 @@ MONTHS = (
 )
 
 
-class UnknownDocumentType(ValueError):
-    pass
-
-
 def parse_date(value):
     """Aceita date, 'AAAA-MM-DD' ou 'DD/MM/AAAA' (formato comum no Sheets)."""
     if isinstance(value, date):
@@ -48,15 +44,13 @@ def render(record, issuer):
     tipo = str(record["tipo_documento"]).strip()
     template = TEMPLATES.get(tipo)
     if template is None:
-        raise UnknownDocumentType(f"tipo_documento desconhecido: {tipo!r}")
+        raise ValueError(f"tipo_documento desconhecido: {tipo!r}")
 
     data = {k: str(v).strip() for k, v in record.items()}
     data["data_emissao_extenso"] = format_date_pt(parse_date(record["data_emissao"]))
 
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=template.PAGE_SIZE)
-    c.setTitle(f"{tipo} - {data['nome']}")
-    c.setAuthor(issuer)
     template.draw(c, data, issuer)
     c.showPage()
     c.save()

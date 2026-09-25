@@ -3,7 +3,7 @@ import io
 import pytest
 from pypdf import PdfReader
 
-from src.engine import UnknownDocumentType, format_date_pt, parse_date, render
+from src.engine import format_date_pt, parse_date, render
 
 # Dados fictícios.
 SAMPLE = {
@@ -43,7 +43,7 @@ def test_curso_longo_quebra_linha_sem_perder_texto():
 
 
 def test_tipo_desconhecido():
-    with pytest.raises(UnknownDocumentType):
+    with pytest.raises(ValueError, match="tipo_documento"):
         render({**SAMPLE, "tipo_documento": "diploma"}, issuer="X")
 
 
