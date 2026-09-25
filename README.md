@@ -26,8 +26,30 @@ src/
   engine.py            motor de geração, agnóstico de template
   templates/           um módulo de layout por tipo de documento
 tests/
+CLAUDE.md              regras de desenvolvimento (Ponytail)
 .env.example           variáveis de ambiente necessárias (sem valores reais)
 ```
+
+## Otimização: desenvolvido com Ponytail
+
+O desenvolvimento usa o [Ponytail](https://github.com/DietrichGebert/ponytail),
+um conjunto de regras para agentes de código (Claude Code, Cursor, Copilot)
+que força a solução mais simples que funciona: YAGNI, biblioteca padrão antes
+de dependência nova, nenhuma abstração não pedida e o menor diff possível.
+As regras aplicadas ficam em [`CLAUDE.md`](CLAUDE.md).
+
+Na prática, neste projeto:
+
+- **Uma dependência de execução** (`reportlab`) nesta etapa. `gspread`,
+  `qrcode` e Flask só entram quando a etapa que usa cada um for construída.
+- **Uma única abstração:** o registro de templates, usado desde o primeiro
+  tipo de documento. Sem classe base, fábrica ou configuração genérica.
+- **Nenhum armazenamento de PDF:** o documento é gerado sob demanda, então
+  não há arquivos, cache ou storage para manter.
+- **Código cortado na revisão:** uma exceção customizada com um único uso
+  virou `ValueError`, e os metadados de PDF que ninguém pediu foram removidos.
+- **O que nunca é simplificado:** validação de entrada, rate limiting, IDs não
+  sequenciais e a restrição de dados expostos na validação.
 
 ## Planilha
 
