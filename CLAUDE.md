@@ -31,4 +31,6 @@ Antes de escrever código, pare no primeiro degrau que resolve:
 - SemVer, controle interno. Sem release formal, sem publicar em lugar nenhum.
 - Sobe a versão só em marco real: 0.2.0 = validação por QR funcionando,
   0.3.0 = link do LinkedIn funcionando.
-- Cada marco: uma linha no `CHANGELOG.md` + `git tag vX.Y.Z` no commit dessa linha.
+- Cada marco: uma linha no `CHANGELOG.md`, num commit com mensagem
+  `Versão X.Y.Z: <resumo>`. A tag `vX.Y.Z` é criada pela Action
+  "Criar tag de versão" (disparo manual), que procura essa mensagem.

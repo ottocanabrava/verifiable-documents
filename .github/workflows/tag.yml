@@ -1,0 +1,38 @@
+name: Criar tag de versão
+
+# Disparo manual (Actions -> Criar tag de versão -> Run workflow).
+# Marca com vX.Y.Z o commit cuja mensagem começa com "Versão X.Y.Z:".
+on:
+  workflow_dispatch:
+    inputs:
+      versao:
+        description: "Versão (ex.: 0.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Criar e enviar a tag
+        env:
+          VERSAO: ${{ inputs.versao }}
+        run: |
+          if [[ ! "$VERSAO" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Versão inválida: use o formato X.Y.Z (ex.: 0.1.0)"; exit 1
+          fi
+          COMMIT=$(git log --fixed-strings --grep="Versão $VERSAO:" --format=%H -1)
+          if [[ -z "$COMMIT" ]]; then
+            echo "::error::Nenhum commit com a mensagem 'Versão $VERSAO:' nesta branch"; exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$VERSAO" "$COMMIT" -m "$VERSAO"
+          git push origin "v$VERSAO"
+          echo "Tag v$VERSAO criada em $COMMIT"
