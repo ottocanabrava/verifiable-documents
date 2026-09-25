@@ -1,0 +1,87 @@
+# Verifiable Documents
+
+Gerador de documentos verificáveis (certificados de conclusão de curso,
+declarações, etc.) em PDF, a partir de uma planilha do Google Sheets.
+
+O PDF nunca é armazenado: é sempre gerado sob demanda a partir da linha
+da planilha, identificada por um ID de validação não sequencial.
+
+> Repositório de portfólio: contém apenas dados fictícios de exemplo e
+> nenhuma credencial.
+
+## Status
+
+| Etapa | Situação |
+|---|---|
+| Motor de PDF + template `certificado_curso` | ✅ |
+| Leitura do Google Sheets | ⏳ |
+| ID de validação + QR code | ⏳ |
+| Link "Adicionar ao LinkedIn" | ⏳ |
+| Rota `/validar` | ⏳ |
+
+## Estrutura
+
+```
+src/
+  engine.py            motor de geração, agnóstico de template
+  templates/           um módulo de layout por tipo de documento
+tests/
+.env.example           variáveis de ambiente necessárias (sem valores reais)
+```
+
+## Planilha
+
+Uma linha por documento, com as colunas:
+
+```
+id | tipo_documento | nome | curso | carga_horaria | data_emissao | status
+```
+
+`data_emissao` aceita `AAAA-MM-DD` ou `DD/MM/AAAA`. O valor de
+`tipo_documento` escolhe o template (ex.: `certificado_curso`).
+
+## Rodando localmente
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+pytest
+```
+
+Gerando um PDF de exemplo:
+
+```python
+from src.engine import render
+
+record = {
+    "id": "k7Qm2xPz9aBc",
+    "tipo_documento": "certificado_curso",
+    "nome": "Maria Exemplo da Silva",
+    "curso": "Introdução à Análise de Dados",
+    "carga_horaria": "40",
+    "data_emissao": "15/03/2026",
+}
+open("exemplo.pdf", "wb").write(render(record, issuer="Escola Exemplo"))
+```
+
+## Variáveis de ambiente
+
+Copie `.env.example` para `.env` e preencha. O `.env` está no
+`.gitignore` e nunca deve ser commitado.
+
+| Variável | Descrição |
+|---|---|
+| `GOOGLE_SERVICE_ACCOUNT_FILE` | Caminho do JSON da service account, **fora** do repositório |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | Alternativa: o conteúdo do JSON numa linha (útil em deploy) |
+| `SHEET_ID` | ID da planilha (trecho entre `/d/` e `/edit` na URL) |
+| `SHEET_TAB` | Nome da aba com os dados |
+| `VALIDATION_BASE_URL` | URL pública da página de validação (usada no QR code) |
+| `ISSUER_NAME` | Nome da instituição emissora |
+| `LINKEDIN_ORGANIZATION_ID` | ID da organização no LinkedIn (opcional) |
+
+## Adicionando um novo tipo de documento
+
+1. Crie `src/templates/<tipo>.py` com `PAGE_SIZE` e `draw(c, record, issuer)`.
+2. Registre o módulo em `TEMPLATES`, em `src/templates/__init__.py`.
+3. Use `<tipo>` na coluna `tipo_documento` da planilha.
