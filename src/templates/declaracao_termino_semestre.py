@@ -1,6 +1,8 @@
 """Declaração de término de semestre: mesmo layout da de matrícula."""
 from .declaracao_matricula import PAGE_SIZE, REQUIRED, _b, draw_declaracao  # noqa: F401
 
+NOME = "Declaração de término de semestre"
+
 
 def draw(c, record, issuer):
     draw_declaracao(

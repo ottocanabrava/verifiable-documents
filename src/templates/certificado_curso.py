@@ -10,6 +10,9 @@ from reportlab.lib.pagesizes import A4, landscape
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
+from ..qr import draw_qr
+
+NOME = "Certificado de conclusão de curso"
 PAGE_SIZE = landscape(A4)
 REQUIRED = ("nome", "curso", "carga_horaria")
 
@@ -93,3 +96,9 @@ def draw_certificado(c, record, issuer, conclusao):
     c.setFillColor(MUTED)
     rodape = " · ".join(v for v in (issuer.get("nome"), f"ID de validação: {record['id']}") if v)
     c.drawString(30, 24, rodape)
+
+    # QR de validação no canto inferior direito, fora do eixo central.
+    if record.get("validacao_url"):
+        draw_qr(c, record["validacao_url"], width - 30 - 56, 34, 56)
+        c.setFont("Montserrat-Regular", 6.5)
+        c.drawCentredString(width - 30 - 28, 24, "Verifique a autenticidade")

@@ -13,6 +13,9 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import Paragraph
 
+from ..qr import draw_qr
+
+NOME = "Declaração de matrícula"
 PAGE_SIZE = A4
 REQUIRED = ("nome", "curso", "cpf", "rg", "endereco")
 
@@ -101,3 +104,8 @@ def draw_declaracao(c, record, issuer, titulo, abertura, situacao):
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 7.5)
     c.drawString(left, 25, f"ID de validação: {record['id']}")
+
+    if record.get("validacao_url"):
+        draw_qr(c, record["validacao_url"], right - 56, 36, 56)
+        c.setFont("Helvetica", 6.5)
+        c.drawCentredString(right - 28, 25, "Verifique a autenticidade")

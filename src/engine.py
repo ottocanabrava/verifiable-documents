@@ -7,6 +7,7 @@ disco: o PDF é sempre gerado sob demanda.
 import io
 import os
 from datetime import date, datetime
+from urllib.parse import quote
 
 from reportlab.pdfgen import canvas
 
@@ -45,7 +46,8 @@ def format_date_pt(d):
     return f"{d.day} de {MONTHS[d.month - 1]} de {d.year}"
 
 
-def render(record, issuer):
+def render(record, issuer, validation_base=""):
+    """PDF em bytes. Com `validation_base`, o documento ganha QR de validação."""
     data = {k: str(v).strip() for k, v in record.items() if v is not None}
 
     tipo = data.get("tipo_documento", "")
@@ -58,6 +60,8 @@ def render(record, issuer):
         raise ValueError(f"campos obrigatórios ausentes: {', '.join(missing)}")
 
     data["data_emissao_extenso"] = format_date_pt(parse_date(data["data_emissao"]))
+    if validation_base:
+        data["validacao_url"] = f"{validation_base}?id={quote(data['id'])}"
 
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=template.PAGE_SIZE)

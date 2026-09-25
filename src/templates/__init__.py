@@ -1,6 +1,6 @@
 """Registro de templates: um módulo por tipo de documento.
 
-Cada módulo expõe `PAGE_SIZE`, `REQUIRED` (colunas obrigatórias além de
+Cada módulo expõe `NOME` (exibido na validação), `PAGE_SIZE`, `REQUIRED` (colunas obrigatórias além de
 `id` e `data_emissao`) e `draw(c, record, issuer)`, que desenha uma página
 no canvas do ReportLab. A chave é o valor da coluna `tipo_documento`.
 """
