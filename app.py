@@ -1,14 +1,16 @@
-"""Servidor da página pública de validação e comandos de emissão.
+"""Servidor da página pública de validação, da emissão e comandos.
 
-    flask --app app run                    # página em /validar
+    flask --app app run                    # /validar (público) e /emitir (senha)
     flask --app app novo-id -n 5           # IDs novos para colar na planilha
     flask --app app pdf <id>               # gera <id>.pdf a partir da planilha
 """
+import hmac
+import io
 import os
 import time
 
 import click
-from flask import Flask, render_template_string, request
+from flask import Flask, Response, abort, render_template_string, request, send_file
 
 from src.engine import issuer_from_env, render
 from src.templates import TEMPLATES
@@ -114,11 +116,131 @@ def validar():
     return page(200, "valido" if doc["valido"] else "invalido", doc, doc_id)
 
 
+def pdf_for(record):
+    """PDF do registro; busca o conteúdo do curso só se o tipo precisar."""
+    template = TEMPLATES.get(str(record.get("tipo_documento", "")).strip())
+    if template and "conteudo" in template.REQUIRED:
+        record = {**record, "conteudo": conteudo_do_curso(app.config["LOAD_CONTEUDOS"](), record.get("curso", ""))}
+    return render(record, issuer_from_env(), os.environ.get("VALIDATION_BASE_URL", ""))
+
+
+# --- Emissão (área da escola, protegida por senha) ---
+
+ADMIN_PAGE = """<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emissão de documentos</title>
+<style>
+  body { margin: 0; font-family: system-ui, sans-serif; background: #f4f3f8; color: #2b2440; }
+  header { background: #36296c; color: #fff; padding: 20px 16px; }
+  header h1 { margin: 0; font-size: 1.1rem; letter-spacing: .04em; }
+  main { max-width: 960px; margin: 20px auto; padding: 0 16px; }
+  .card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 16px; }
+  h2 { font-size: 1rem; margin: 0 0 8px; }
+  .muted { color: #6b6780; font-size: .9rem; }
+  code { font-size: 1rem; background: #f4f3f8; padding: 2px 6px; border-radius: 4px; user-select: all; }
+  .ids { display: flex; flex-wrap: wrap; gap: 8px; }
+  .table { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #e6e3ee; white-space: nowrap; }
+  a.btn { display: inline-block; padding: 6px 12px; border-radius: 6px; background: #ee791e; color: #fff; text-decoration: none; }
+  .bad { color: #b3261e; }
+</style>
+</head>
+<body>
+<header><h1>EMISSÃO DE DOCUMENTOS{% if emissor %} · {{ emissor }}{% endif %}</h1></header>
+<main>
+  {% if erro %}<div class="card"><p class="bad"><strong>Não foi possível gerar o PDF:</strong> {{ erro }}</p>
+  <p class="muted">Corrija a linha na planilha e tente de novo.</p></div>{% endif %}
+  <div class="card">
+    <h2>IDs novos</h2>
+    <p class="muted">Para um documento novo, copie um ID para a coluna <strong>id</strong> da planilha.</p>
+    <div class="ids">{% for i in novos %}<code>{{ i }}</code>{% endfor %}</div>
+  </div>
+  <div class="card">
+    <h2>Documentos da planilha ({{ docs|length }})</h2>
+    <p class="muted">Os mais recentes primeiro. Para achar um aluno, use a busca do navegador.</p>
+    <div class="table"><table>
+      <tr><th>Nome</th><th>Documento</th><th>Curso</th><th>Emissão</th><th>Status</th><th></th></tr>
+      {% for d in docs %}
+      <tr>
+        <td>{{ d.nome }}</td><td>{{ d.tipo_documento }}</td><td>{{ d.curso }}</td>
+        <td>{{ d.data_emissao }}</td><td>{{ d.status }}</td>
+        <td>{% if d.id_ok %}<a class="btn" href="{{ url_for('emitir_pdf', doc_id=d.id) }}">Baixar PDF</a>
+            {% else %}<span class="bad">ID inválido</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </table></div>
+  </div>
+</main>
+</body>
+</html>"""
+
+
+def require_admin():
+    """Senha única da escola (ADMIN_PASSWORD), pela caixa de login do navegador."""
+    expected = os.environ.get("ADMIN_PASSWORD", "")
+    if not expected:
+        abort(404)  # sem senha configurada, a área de emissão não existe
+    auth = request.authorization
+    if auth and hmac.compare_digest((auth.password or "").encode(), expected.encode()):
+        return None
+    if rate_limited(request.remote_addr):
+        return Response("Muitas tentativas. Aguarde um minuto.", 429)
+    return Response("Senha necessária.", 401, {"WWW-Authenticate": 'Basic realm="Emissao", charset="UTF-8"'})
+
+
+def admin_page(records, erro=None, status=200):
+    existing = {str(r.get("id", "")).strip() for r in records}
+    novos = []
+    while len(novos) < 5:
+        i = new_id()
+        if i not in existing:
+            novos.append(i)
+    docs = [
+        {**{k: str(r.get(k, "")).strip() for k in ("id", "nome", "tipo_documento", "curso", "data_emissao", "status")},
+         "id_ok": clean_id(r.get("id")) is not None}
+        for r in reversed(records)
+    ]
+    html = render_template_string(ADMIN_PAGE, docs=docs, novos=novos, erro=erro, emissor=os.environ.get("ISSUER_NOME", ""))
+    return html, status
+
+
+@app.get("/emitir")
+def emitir():
+    denied = require_admin()
+    if denied:
+        return denied
+    return admin_page(app.config["LOAD_RECORDS"]())
+
+
+@app.get("/emitir/<doc_id>.pdf")
+def emitir_pdf(doc_id):
+    denied = require_admin()
+    if denied:
+        return denied
+    records = app.config["LOAD_RECORDS"]()
+    record = find(records, doc_id)
+    if record is None:
+        abort(404)
+    try:
+        pdf = pdf_for(record)
+    except ValueError as e:
+        return admin_page(records, erro=f"{record.get('nome', '')} ({doc_id}): {e}", status=422)
+    template = TEMPLATES[str(record["tipo_documento"]).strip()]
+    nome = f"{template.NOME} - {str(record.get('nome', '')).strip()}.pdf"
+    return send_file(io.BytesIO(pdf), mimetype="application/pdf", as_attachment=True, download_name=nome)
+
+
 @app.after_request
 def security_headers(response):
     response.headers["Content-Security-Policy"] = "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'"
     response.headers["Referrer-Policy"] = "no-referrer"
     response.headers["X-Content-Type-Options"] = "nosniff"
+    if request.path.startswith("/emitir"):
+        response.headers["Cache-Control"] = "no-store"  # dados de alunos: nada em cache
     return response
 
 
@@ -137,10 +259,7 @@ def gerar_pdf(doc_id):
     record = find(app.config["LOAD_RECORDS"](), doc_id)
     if record is None:
         raise click.ClickException("documento não encontrado")
-    template = TEMPLATES.get(str(record.get("tipo_documento", "")).strip())
-    if template and "conteudo" in template.REQUIRED:
-        record = {**record, "conteudo": conteudo_do_curso(app.config["LOAD_CONTEUDOS"](), record.get("curso", ""))}
-    pdf = render(record, issuer_from_env(), os.environ.get("VALIDATION_BASE_URL", ""))
+    pdf = pdf_for(record)
     path = f"{clean_id(doc_id)}.pdf"
     with open(path, "wb") as f:
         f.write(pdf)

@@ -137,8 +137,14 @@ Com o `.env` configurado (o Flask carrega o arquivo sozinho):
 ```bash
 flask --app app novo-id -n 5    # IDs novos: cole na coluna `id` da planilha
 flask --app app pdf <id>        # gera <id>.pdf com QR de validação
-flask --app app run             # página pública em /validar
+flask --app app run             # /validar (público) e /emitir (escola, com senha)
 ```
+
+A área **/emitir** é para a escola: lista os documentos da planilha com um
+botão "Baixar PDF" em cada um e sugere IDs novos para colar na coluna `id`.
+Ela usa a caixa de login do próprio navegador (qualquer usuário + a senha em
+`ADMIN_PASSWORD`); sem `ADMIN_PASSWORD` configurada, a área não existe. Erros
+de senha contam no mesmo limite por IP da validação.
 
 O QR code de cada documento aponta para `VALIDATION_BASE_URL?id=<id>` e também
 é um link clicável no PDF. A página de validação:
@@ -167,6 +173,7 @@ Copie `.env.example` para `.env` e preencha. O `.env` está no
 | `ISSUER_RAZAO_SOCIAL`, `ISSUER_CNPJ`, `ISSUER_CIDADE`, `ISSUER_ENDERECO` | Dados da mantenedora, usados no texto da declaração |
 | `ISSUER_SIGNATARIO`, `ISSUER_CARGO` | Quem assina os documentos |
 | `ISSUER_LOGO`, `ISSUER_LOGO_BRANCO`, `ISSUER_ASSINATURA` | Caminhos das imagens (logo colorido para a declaração, logo claro para o fundo roxo do certificado, assinatura), **fora** do repositório (opcionais) |
+| `ADMIN_PASSWORD` | Senha da área de emissão `/emitir` (longa e só da escola) |
 | `LINKEDIN_ORGANIZATION_ID` | ID da organização no LinkedIn (opcional) |
 
 ## Adicionando um novo tipo de documento

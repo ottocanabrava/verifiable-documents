@@ -160,3 +160,73 @@ def test_cli_pdf(client, tmp_path, monkeypatch):
     pdf = (tmp_path / "k7Qm2xPz9aBc.pdf").read_bytes()
     assert len(PdfReader(io.BytesIO(pdf)).pages) == 2  # conteúdo veio da aba "Conteudos"
     assert runner.invoke(args=["pdf", "naoExiste123"]).exit_code != 0
+
+
+# --- Emissão (/emitir) ---
+
+SENHA = "senha-de-teste"
+
+
+def auth(senha=SENHA):
+    import base64
+    return {"Authorization": "Basic " + base64.b64encode(f"escola:{senha}".encode()).decode()}
+
+
+@pytest.fixture
+def admin(client, monkeypatch):
+    monkeypatch.setenv("ADMIN_PASSWORD", SENHA)
+    for k, v in ISSUER.items():
+        monkeypatch.setenv(f"ISSUER_{k.upper()}", v)
+    return client
+
+
+def test_emitir_sem_senha_configurada_nao_existe(client, monkeypatch):
+    monkeypatch.delenv("ADMIN_PASSWORD", raising=False)
+    assert client.get("/emitir", headers=auth()).status_code == 404
+
+
+def test_emitir_pede_senha(admin):
+    r = admin.get("/emitir")
+    assert r.status_code == 401 and "Basic" in r.headers["WWW-Authenticate"]
+    assert admin.get("/emitir", headers=auth("errada")).status_code == 401
+
+
+def test_emitir_limita_tentativas_de_senha(admin):
+    codes = [admin.get("/emitir", headers=auth("errada")).status_code for _ in range(app_module.RATE_LIMIT + 1)]
+    assert codes[-1] == 429
+    # com a senha certa, a escola continua entrando
+    assert admin.get("/emitir", headers=auth()).status_code == 200
+
+
+def test_emitir_lista_documentos_e_ids_novos(admin):
+    r = admin.get("/emitir", headers=auth())
+    body = r.get_data(as_text=True)
+    assert r.status_code == 200 and r.headers["Cache-Control"] == "no-store"
+    assert "Maria Exemplo da Silva" in body and "João Exemplo Souza" in body
+    assert "/emitir/k7Qm2xPz9aBc.pdf" in body
+    import re
+    novos = re.findall(r"<code>([A-Za-z0-9]{12})</code>", body)
+    assert len(novos) == 5 and not set(novos) & {r["id"] for r in RECORDS}
+    assert DECLARACAO["cpf"] not in body  # a lista não mostra dados pessoais
+
+
+@pytest.mark.parametrize("record, paginas", [(CERTIFICADO, 2), (DECLARACAO, 1)])
+def test_emitir_baixa_pdf(admin, record, paginas):
+    r = admin.get(f"/emitir/{record['id']}.pdf", headers=auth())
+    assert r.status_code == 200 and r.mimetype == "application/pdf"
+    assert "attachment" in r.headers["Content-Disposition"]
+    assert len(PdfReader(io.BytesIO(r.data)).pages) == paginas
+
+
+def test_emitir_pdf_exige_senha(admin):
+    assert admin.get("/emitir/k7Qm2xPz9aBc.pdf").status_code == 401
+
+
+def test_emitir_pdf_inexistente(admin):
+    assert admin.get("/emitir/naoExiste123.pdf", headers=auth()).status_code == 404
+
+
+def test_emitir_pdf_com_erro_na_planilha_mostra_motivo(admin):
+    app_module.app.config["LOAD_CONTEUDOS"] = lambda: []  # curso sem conteúdo cadastrado
+    r = admin.get("/emitir/k7Qm2xPz9aBc.pdf", headers=auth())
+    assert r.status_code == 422 and "conteudo" in r.get_data(as_text=True)
