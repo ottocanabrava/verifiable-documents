@@ -1,0 +1,52 @@
+{
+  "name": "Validar documento: preparar",
+  "nodes": [
+    {
+      "id": "5b1f0c1e-0002-4000-8000-000000000001",
+      "name": "Chamado pelo fluxo de validação",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "inputSource": "passthrough"
+      }
+    },
+    {
+      "id": "5b1f0c1e-0002-4000-8000-000000000002",
+      "name": "Preparar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Formato do ID e limite de consultas, ANTES de qualquer leitura da planilha.\nconst LIMITE = 10;      // consultas por visitante\nconst JANELA = 60000;   // ms\n\nconst req = $input.first().json;\nconst bruto = String((req.query || {}).id ?? '').trim();\nif (!bruto) return [{ json: { estado: 'vazio', id: '' } }];\n\n// IP real do visitante: último endereço do X-Forwarded-For (o que o proxy\n// da hospedagem acrescentou); o visitante não controla essa posição.\nconst headers = req.headers || {};\nconst encaminhado = String(headers['x-forwarded-for'] || '').split(',').map(s => s.trim()).filter(Boolean);\nconst ip = encaminhado.pop() || String(headers['x-real-ip'] || 'desconhecido');\n\n// ponytail: contador nos dados estáticos do fluxo (só em execução de produção,\n// sem trava entre execuções simultâneas). Teto: limite aproximado; se precisar\n// de exatidão, mover a validação para a versão Python.\nconst dados = $getWorkflowStaticData('global');\nconst agora = Date.now();\nconst hits = dados.hits || {};\nfor (const k of Object.keys(hits)) {\n  hits[k] = hits[k].filter(t => agora - t < JANELA);\n  if (!hits[k].length) delete hits[k];\n}\nconst meus = hits[ip] || [];\nif (meus.length >= LIMITE) {\n  dados.hits = hits;\n  return [{ json: { estado: 'limite', id: '' } }];\n}\nmeus.push(agora);\nhits[ip] = meus;\ndados.hits = hits;\n\n// ID fora do formato é rejeitado aqui, sem consultar a planilha.\nconst valido = /^[A-Za-z0-9]{12}$/.test(bruto);\nreturn [{ json: { estado: valido ? 'consultar' : 'nao_encontrado', id: valido ? bruto : '' } }];\n"
+      }
+    }
+  ],
+  "connections": {
+    "Chamado pelo fluxo de validação": {
+      "main": [
+        [
+          {
+            "node": "Preparar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false,
+    "saveExecutionProgress": false
+  },
+  "pinData": {}
+}
