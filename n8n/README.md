@@ -60,10 +60,13 @@ por isso a divisão em dois fluxos. Se ainda assim bloquear, peça ao responsáv
 pelo ambiente que libere o salvamento de fluxos (rotas `/rest/` e `/api/v1/`),
 informando o ID da requisição bloqueada que vem nos cabeçalhos da resposta.
 
-Testado no n8n 2.40.5, ainda como fluxo único, com uma planilha simulada: documento válido, declaração
-sem dados pessoais, revogado, tipo desconhecido, ID duplicado, malformado e
-inexistente, XSS vindo da planilha, falha da planilha (503) e limite de
-consultas.
+Testado no n8n 2.40.5, ainda como fluxo único, com uma planilha simulada:
+documento válido, declaração sem dados pessoais, revogado, tipo desconhecido, ID
+duplicado, malformado e inexistente, XSS vindo da planilha, falha da planilha
+(503) e limite de consultas. Já em dois fluxos, testado num ambiente real com
+uma linha fictícia: documento válido com o link do LinkedIn, revogado,
+malformado, inexistente e limite de consultas (o contador persiste no subfluxo, e
+um `X-Forwarded-For` forjado é ignorado).
 
 ### Diferenças em relação à versão Python
 
