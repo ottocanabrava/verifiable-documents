@@ -248,3 +248,47 @@ def test_atras_de_proxy_rate_limit_usa_ip_real(monkeypatch):
     finally:
         monkeypatch.delenv("TRUST_PROXY")
         importlib.reload(app_module)
+
+
+# --- LinkedIn ---
+
+def test_linkedin_url_parametros_e_codificacao():
+    from urllib.parse import parse_qs, urlsplit
+
+    from src.linkedin import linkedin_url
+
+    url = linkedin_url(CERTIFICADO, "https://exemplo.com/validar?id=k7Qm2xPz9aBc", "Escola Exemplo & Cia")
+    parts = urlsplit(url)
+    assert f"{parts.scheme}://{parts.netloc}{parts.path}" == "https://www.linkedin.com/profile/add"
+    assert " " not in url and "&Cia" not in url  # tudo codificado
+    q = {k: v[0] for k, v in parse_qs(parts.query).items()}
+    assert q == {
+        "startTask": "CERTIFICATION_NAME",
+        "name": "Certificado de conclusão de curso — Inglês",
+        "organizationName": "Escola Exemplo & Cia",
+        "issueYear": "2026",
+        "issueMonth": "3",
+        "certUrl": "https://exemplo.com/validar?id=k7Qm2xPz9aBc",
+        "certId": "k7Qm2xPz9aBc",
+    }
+
+
+def test_linkedin_usa_id_da_organizacao_quando_existe():
+    from urllib.parse import parse_qs, urlsplit
+
+    from src.linkedin import linkedin_url
+
+    q = parse_qs(urlsplit(linkedin_url(CERTIFICADO, "https://x", "Escola", "12345")).query)
+    assert q["organizationId"] == ["12345"] and "organizationName" not in q
+
+
+def test_linkedin_nao_se_aplica_a_declaracao():
+    from src.linkedin import linkedin_url
+
+    assert linkedin_url(DECLARACAO, "https://x", "Escola") is None
+
+
+def test_pagina_mostra_linkedin_so_para_certificado_valido(client):
+    assert "Adicionar ao LinkedIn" in client.get("/validar?id=k7Qm2xPz9aBc").get_data(as_text=True)
+    assert "Adicionar ao LinkedIn" not in client.get(f"/validar?id={DECLARACAO['id']}").get_data(as_text=True)
+    assert "Adicionar ao LinkedIn" not in client.get("/validar?id=RevogadoXXXX").get_data(as_text=True)
