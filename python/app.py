@@ -14,6 +14,7 @@ from flask import Flask, Response, abort, render_template_string, request, send_
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from src.engine import issuer_from_env, render
+from src.linkedin import linkedin_url
 from src.templates import TEMPLATES
 from src.validation import clean_id, conteudo_do_curso, find, load_conteudos, load_records, new_id, public_view
 
@@ -63,6 +64,8 @@ PAGE = """<!doctype html>
   .ok { color: #1d7a45; } .bad { color: #b3261e; }
   dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; }
   dt { color: #6b6780; } dd { margin: 0; font-weight: 600; }
+  a.linkedin { display: block; margin-top: 16px; padding: 10px 16px; border-radius: 8px; background: #0a66c2;
+               color: #fff; text-align: center; text-decoration: none; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -85,6 +88,7 @@ PAGE = """<!doctype html>
       {% if doc.carga_horaria %}<dt>Carga horária</dt><dd>{{ doc.carga_horaria }} horas</dd>{% endif %}
       <dt>Emissão</dt><dd>{{ doc.data_emissao }}</dd>
     </dl>
+    {% if linkedin %}<a class="linkedin" href="{{ linkedin }}" target="_blank" rel="noopener noreferrer">Adicionar ao LinkedIn</a>{% endif %}
   </div>
   {% elif resultado == "invalido" %}
   <div class="card"><p class="status bad">✗ Este documento não é mais válido.</p></div>
@@ -98,9 +102,9 @@ PAGE = """<!doctype html>
 </html>"""
 
 
-def page(status, resultado=None, doc=None, doc_id=""):
+def page(status, resultado=None, doc=None, doc_id="", linkedin=None):
     html = render_template_string(
-        PAGE, resultado=resultado, doc=doc, doc_id=doc_id, emissor=os.environ.get("ISSUER_NOME", "")
+        PAGE, resultado=resultado, doc=doc, doc_id=doc_id, linkedin=linkedin, emissor=os.environ.get("ISSUER_NOME", "")
     )
     return html, status
 
@@ -120,7 +124,17 @@ def validar():
         return page(404, "nao_encontrado", doc_id=doc_id or "")
 
     doc = public_view(record)
-    return page(200, "valido" if doc["valido"] else "invalido", doc, doc_id)
+    if not doc["valido"]:
+        return page(200, "invalido", doc, doc_id)
+
+    # Só certificados válidos ganham o link do LinkedIn (declarações não).
+    cert_url = f"{os.environ.get('VALIDATION_BASE_URL') or request.base_url}?id={doc_id}"
+    try:
+        linkedin = linkedin_url(record, cert_url, os.environ.get("ISSUER_NOME", ""),
+                                os.environ.get("LINKEDIN_ORGANIZATION_ID", ""))
+    except ValueError:  # data de emissão ilegível: valida, só sem o link
+        linkedin = None
+    return page(200, "valido", doc, doc_id, linkedin)
 
 
 def pdf_for(record):
