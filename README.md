@@ -27,7 +27,7 @@ foi implementado de duas formas, porque o ambiente de quem emite os
 documentos define o que é possível rodar (por que, em
 [`docs/decisao.md`](docs/decisao.md)).
 
-| | [Python](python/) | [n8n](n8n/) |
+| | [Python](python/) | [n8n](n8n/) (em desenvolvimento) |
 |---|---|---|
 | Stack | Flask, ReportLab, gspread, Docker | n8n, Google Sheets, Google Slides |
 | PDF | Desenhado em código, layout adaptativo | Modelo no Google Slides preenchido pelo fluxo |
