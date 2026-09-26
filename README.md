@@ -9,6 +9,17 @@ tipo, nome, curso, carga horária e data. CPF, RG e endereço nunca aparecem.
 
 > Repositório de portfólio: apenas dados fictícios e nenhuma credencial.
 
+<p align="center">
+  <img src="docs/imagens/certificado.png" width="760"
+       alt="Certificado de conclusão com nome em destaque, curso, carga horária, assinatura e QR code de validação">
+</p>
+
+| Conteúdo programático (curso completo) | Declaração de matrícula | Validação no celular |
+|---|---|---|
+| <img src="docs/imagens/conteudo.png" width="300" alt="Segunda página do certificado com o conteúdo do curso em duas colunas"> | <img src="docs/imagens/declaracao.png" width="200" alt="Declaração de matrícula com QR code de validação"> | <img src="docs/imagens/validacao.png" width="200" alt="Página de validação mostrando documento válido e o botão Adicionar ao LinkedIn"> |
+
+<sub>Imagens geradas pela implementação Python com dados, logo e assinatura fictícios.</sub>
+
 ## Uma especificação, duas implementações
 
 O mesmo conjunto de regras ([`docs/especificacao.md`](docs/especificacao.md))
@@ -70,6 +81,7 @@ Na prática:
 docs/
   especificacao.md     contrato comum às duas implementações
   decisao.md           por que existem duas
+  imagens/             exemplos gerados com dados fictícios
 python/                implementação Python (código, testes, Docker)
 n8n/                   implementação n8n (fluxos e modelos)
 CLAUDE.md              regras de desenvolvimento (Ponytail)
