@@ -1,0 +1,716 @@
+{
+  "name": "Emitir documento",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "emitir",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "emitir"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "COLE_AQUI_O_ID_DO_SUBFLUXO"
+        },
+        "options": {}
+      },
+      "name": "Autorizar (subfluxo)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5b1e0c52-2f6a-4c1e-9a53-0e1f2a3b4c5d",
+              "leftValue": "={{ $json.autorizado }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Autorizado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.mensagem }}",
+        "options": {
+          "responseCode": "={{ $json.status }}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=utf-8"
+              },
+              {
+                "name": "WWW-Authenticate",
+                "value": "Basic realm=\"Emissao\", charset=\"UTF-8\""
+              },
+              {
+                "name": "Retry-After",
+                "value": "60"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              },
+              {
+                "name": "Referrer-Policy",
+                "value": "no-referrer"
+              },
+              {
+                "name": "X-Content-Type-Options",
+                "value": "nosniff"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Pedir senha",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        660,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "action": "generate",
+        "dataPropertyName": "novo_id",
+        "encodingType": "base64",
+        "stringLength": 16
+      },
+      "name": "Gerar ID",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        660,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "COLE_AQUI_O_ID_DA_PLANILHA"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultName": "Página1"
+        },
+        "options": {
+          "outputFormatting": {
+            "values": {
+              "general": "FORMATTED_VALUE",
+              "date": "FORMATTED_STRING"
+            }
+          }
+        }
+      },
+      "name": "Planilha de documentos",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        880,
+        -80
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===== Configuração (preencha no seu n8n; nunca no repositório) =====\nconst EMISSOR = 'Escola Exemplo de Idiomas';\nconst URL_VALIDACAO = 'https://exemplo.com/webhook/validar';  // endereço público da validação\nconst MODELO_CERTIFICADO = '';  // ID do modelo no Google Slides\nconst MODELO_DECLARACAO = '';\n// ponytail: o QR é desenhado por um serviço externo, que vê a URL de validação\n// (só o ID, nenhum dado do aluno). Se precisar evitar, trocar por um gerador próprio.\nconst QR_API = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=0&data=';\n// ====================================================================\n\nconst TIPOS = {\n  certificado_curso: 'Certificado de conclusão de curso',\n  certificado_semestre: 'Certificado de conclusão de semestre',\n  certificado_trimestre: 'Certificado de conclusão de trimestre',\n  declaracao_matricula: 'Declaração de matrícula',\n  declaracao_termino_semestre: 'Declaração de término de semestre',\n};\nconst OBRIGATORIOS = {\n  certificado_semestre: ['nome', 'curso', 'carga_horaria'],\n  certificado_trimestre: ['nome', 'curso', 'carga_horaria'],\n  declaracao_matricula: ['nome', 'curso', 'cpf', 'rg', 'endereco'],\n  declaracao_termino_semestre: ['nome', 'curso', 'cpf', 'rg', 'endereco'],\n};\nconst MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho',\n  'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];\n\nconst esc = v => String(v ?? '').replace(/[&<>\"']/g, c =>\n  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' })[c]);\nconst txt = v => String(v ?? '').trim();\nconst ID = /^[A-Za-z0-9]{12}$/;\n\nfunction extenso(valor) {  // 'AAAA-MM-DD' ou 'DD/MM/AAAA' -> '24 de setembro de 2026', ou ''\n  let m = txt(valor).match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);\n  const [a, me, d] = m ? [+m[1], +m[2], +m[3]]\n    : (m = txt(valor).match(/^(\\d{2})\\/(\\d{2})\\/(\\d{4})$/)) ? [+m[3], +m[2], +m[1]] : [];\n  const dt = new Date(Date.UTC(a, me - 1, d));\n  if (!m || dt.getUTCMonth() !== me - 1 || dt.getUTCDate() !== d) return '';\n  return `${d} de ${MESES[me - 1]} de ${a}`;\n}\n\nconst q = $('Webhook').first().json.query || {};\nconst novoId = txt($('Gerar ID').first().json.novo_id).replace(/[^A-Za-z0-9]/g, '').slice(0, 12);\nconst entrada = $input.all().map(i => i.json);\nconst linhas = entrada.filter(r => r.row_number);\nconst contagem = {};\nfor (const r of linhas) contagem[txt(r.id)] = (contagem[txt(r.id)] || 0) + 1;\n\nfunction problema(r) {\n  if (!txt(r.id)) return '';\n  if (!ID.test(txt(r.id))) return 'ID inválido';\n  return contagem[txt(r.id)] > 1 ? 'ID duplicado' : '';\n}\n\nfunction pagina(status, erro) {\n  const docs = linhas.slice().reverse().map(r => {\n    const p = problema(r);\n    const acao = p ? `<span class=\"bad\">${esc(p)}</span>`\n      : `<a class=\"btn\" href=\"?${txt(r.id) ? 'id=' + encodeURIComponent(txt(r.id)) : 'linha=' + r.row_number}\">Baixar PDF</a>`;\n    return `<tr><td>${esc(r.nome)}</td><td>${esc(r.tipo_documento)}</td><td>${esc(r.curso)}</td>\n      <td>${esc(r.data_emissao)}</td><td>${esc(r.status)}</td><td>${acao}</td></tr>`;\n  }).join('\\n');\n  const html = `<!doctype html>\n<html lang=\"pt-BR\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Emissão de documentos</title>\n<style>\n  body { margin: 0; font-family: system-ui, sans-serif; background: #f2f5f5; color: #1f2a2b; }\n  header { background: #0f3d3e; color: #fff; padding: 20px 16px; }\n  header h1 { margin: 0; font-size: 1.1rem; letter-spacing: .04em; }\n  main { max-width: 960px; margin: 20px auto; padding: 0 16px; }\n  .card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 16px; }\n  h2 { font-size: 1rem; margin: 0 0 8px; }\n  .muted { color: #5f6f70; font-size: .9rem; }\n  .table { overflow-x: auto; }\n  table { width: 100%; border-collapse: collapse; font-size: .9rem; }\n  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #e1e9e9; white-space: nowrap; }\n  a.btn { display: inline-block; padding: 6px 12px; border-radius: 6px; background: #0e7c7b; color: #fff; text-decoration: none; }\n  .bad { color: #b3261e; }\n</style>\n</head>\n<body>\n<header><h1>EMISSÃO DE DOCUMENTOS${EMISSOR ? ' · ' + esc(EMISSOR) : ''}</h1></header>\n<main>\n  ${erro ? `<div class=\"card\"><p class=\"bad\"><strong>Não foi possível gerar o PDF:</strong> ${esc(erro)}</p>\n  <p class=\"muted\">Corrija o problema e tente de novo.</p></div>` : ''}\n  <div class=\"card\">\n    <h2>Documentos da planilha (${linhas.length})</h2>\n    <p class=\"muted\">Os mais recentes primeiro. Linha sem ID ganha um ID novo, gravado na planilha, ao baixar o PDF.\n    Para achar um aluno, use a busca do navegador.</p>\n    <div class=\"table\"><table>\n      <tr><th>Nome</th><th>Documento</th><th>Curso</th><th>Emissão</th><th>Status</th><th></th></tr>\n      ${docs}\n    </table></div>\n  </div>\n</main>\n</body>\n</html>`;\n  return [{ json: { acao: 'pagina', status, html } }];\n}\n\nif (entrada.some(r => r.error)) {  // falha ao ler a planilha: detalhe só no n8n\n  return [{ json: { acao: 'pagina', status: 503, html: '<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\">'\n    + '<title>Indisponível</title></head><body><h1>Serviço temporariamente indisponível</h1>'\n    + '<p>Tente de novo em alguns minutos.</p></body></html>' } }];\n}\nif (!q.id && !q.linha) return pagina(200);\n\n// Linha escolhida: pelo ID (tem de ser único) ou pelo número da linha (sem ID ainda).\nlet r;\nif (q.id) {\n  const achadas = linhas.filter(l => txt(l.id) === txt(q.id));\n  if (achadas.length !== 1) return pagina(404, achadas.length ? 'ID duplicado na planilha.' : 'documento não encontrado.');\n  r = achadas[0];\n} else {\n  r = linhas.find(l => String(l.row_number) === txt(q.linha));\n  if (!r) return pagina(404, 'linha não encontrada.');\n}\nconst erro = m => pagina(422, `${txt(r.nome) || 'linha ' + r.row_number}: ${m}`);\n\nlet id = txt(r.id);\nconst idNovo = !id;\nif (idNovo) {\n  if (!ID.test(novoId) || contagem[novoId]) return erro('falha ao gerar o ID; tente de novo.');\n  id = novoId;\n} else if (problema(r)) {\n  return erro(problema(r));\n}\n\nconst tipo = txt(r.tipo_documento);\nif (tipo === 'certificado_curso') {\n  // ponytail: a página do conteúdo do curso ainda não tem modelo no Slides.\n  return erro('o certificado de curso completo ainda não é emitido por aqui.');\n}\nif (!OBRIGATORIOS[tipo]) return erro(`tipo_documento desconhecido: \"${tipo}\".`);\nconst faltando = ['data_emissao', ...OBRIGATORIOS[tipo]].filter(k => !txt(r[k]));\nif (faltando.length) return erro(`campos obrigatórios ausentes: ${faltando.join(', ')}.`);\nconst data = extenso(r.data_emissao);\nif (!data) return erro(`data_emissao inválida: \"${txt(r.data_emissao)}\".`);\nconst modelo = tipo.startsWith('certificado_') ? MODELO_CERTIFICADO : MODELO_DECLARACAO;\nif (!modelo || !URL_VALIDACAO) return erro('modelo ou URL de validação não configurados no n8n.');\n\nconst curso = txt(r.curso);\nconst extras = [\n  txt(r.dia_aula) && `com aulas semanais (${txt(r.dia_aula)})`,\n  txt(r.carga_horaria) && `com carga horária de ${txt(r.carga_horaria)} horas`,\n].filter(Boolean);\nconst textos = tipo.startsWith('certificado_') ? {\n  nome: txt(r.nome),\n  conclusao: tipo === 'certificado_semestre' ? 'concluiu o semestre do curso de' : 'concluiu o trimestre do curso de',\n  CURSO: curso.toUpperCase(),\n  carga_horaria: txt(r.carga_horaria),\n} : {\n  TITULO: tipo === 'declaracao_matricula' ? 'DECLARAÇÃO DE MATRÍCULA' : 'DECLARAÇÃO DE TÉRMINO DE SEMESTRE',\n  abertura: tipo === 'declaracao_matricula' ? 'declara, para os fins que sejam necessários, que' : 'declara que o semestre de',\n  NOME: txt(r.nome).toUpperCase(),\n  cpf: txt(r.cpf),\n  rg: txt(r.rg),\n  ENDERECO: txt(r.endereco).toUpperCase(),\n  situacao: tipo === 'declaracao_matricula' ? 'está devidamente matriculado(a) no' : 'foi concluído no',\n  curso_destaque: tipo === 'declaracao_matricula' ? `curso de ${curso}` : `CURSO DE ${curso.toUpperCase()}`,\n  extras: extras.length ? ', ' + extras.join(' e ') : '',\n};\ntextos.data = data;\ntextos.id = id;\n\n// Pedidos para a API do Slides: troca cada {{marcador}} e a caixa {{qr}} pela imagem.\nconst requests = Object.entries(textos).map(([k, v]) => ({\n  replaceAllText: { containsText: { text: `{{${k}}}`, matchCase: true }, replaceText: v },\n}));\nrequests.push({ replaceAllShapesWithImage: {\n  containsText: { text: '{{qr}}', matchCase: true },\n  imageUrl: QR_API + encodeURIComponent(`${URL_VALIDACAO}?id=${id}`),\n  imageReplaceMethod: 'CENTER_INSIDE',\n} });\n\n// Nome do arquivo para o Content-Disposition: sem controles, aspas nem barras.\nconst arquivo = `${TIPOS[tipo]} - ${txt(r.nome)}`.replace(/[\\u0000-\\u001f\\u007f-\\u009f​-‏‪-‮⁦-⁩/\\\\\"]/g, '')\n  .replace(/\\s+/g, ' ').trim() + '.pdf';\nconst ascii = arquivo.normalize('NFD').replace(/[^\\x20-\\x7e]/g, '');\nconst disposicao = `attachment; filename=\"${ascii}\"; filename*=UTF-8''${encodeURIComponent(arquivo)\n  .replace(/['()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase())}`;\n\nreturn [{ json: { acao: 'pdf', row_number: r.row_number, id, id_novo: idNovo, modelo, copia: `Emissão ${id}`,\n  arquivo, disposicao, requests } }];\n"
+      },
+      "name": "Preparar documento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6c2f1d63-3a7b-4d2f-8b64-1f2a3b4c5d6e",
+              "leftValue": "={{ $json.acao }}",
+              "rightValue": "pdf",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Gerar PDF?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1320,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseCode": "={{ $json.status }}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              },
+              {
+                "name": "Referrer-Policy",
+                "value": "no-referrer"
+              },
+              {
+                "name": "X-Content-Type-Options",
+                "value": "nosniff"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Responder página",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1540,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7d3a2e74-4b8c-4e3a-9c75-2a3b4c5d6e7f",
+              "leftValue": "={{ $json.id_novo }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "ID novo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1540,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "COLE_AQUI_O_ID_DA_PLANILHA"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultName": "Página1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $node[\"Preparar documento\"].json.row_number }}",
+            "id": "={{ $node[\"Preparar documento\"].json.id }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "name": "Gravar ID na planilha",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1760,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $node[\"Preparar documento\"].json.modelo }}/copy",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleOAuth2Api",
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: $node[\"Preparar documento\"].json.copia }) }}"
+      },
+      "name": "Copiar modelo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1980,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://slides.googleapis.com/v1/presentations/{{ $json.id }}:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleOAuth2Api",
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ requests: $node[\"Preparar documento\"].json.requests }) }}"
+      },
+      "name": "Preencher modelo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        -160
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $node[\"Copiar modelo\"].json.id }}/export?mimeType=application/pdf",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleOAuth2Api",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
+        }
+      },
+      "name": "Baixar PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2420,
+        -160
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/pdf"
+              },
+              {
+                "name": "Content-Disposition",
+                "value": "={{ $node[\"Preparar documento\"].json.disposicao }}"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              },
+              {
+                "name": "Referrer-Policy",
+                "value": "no-referrer"
+              },
+              {
+                "name": "X-Content-Type-Options",
+                "value": "nosniff"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Entregar PDF",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2640,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $node[\"Copiar modelo\"].json.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleOAuth2Api",
+        "options": {}
+      },
+      "name": "Apagar cópia",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2860,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $node[\"Copiar modelo\"].json.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleOAuth2Api",
+        "options": {}
+      },
+      "name": "Apagar cópia (erro)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2640,
+        80
+      ],
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Não foi possível gerar o PDF. Tente de novo em alguns minutos.",
+        "options": {
+          "responseCode": 502,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=utf-8"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              },
+              {
+                "name": "Referrer-Policy",
+                "value": "no-referrer"
+              },
+              {
+                "name": "X-Content-Type-Options",
+                "value": "nosniff"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Responder erro",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2860,
+        80
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Autorizar (subfluxo)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Autorizar (subfluxo)": {
+      "main": [
+        [
+          {
+            "node": "Autorizado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Autorizado?": {
+      "main": [
+        [
+          {
+            "node": "Gerar ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pedir senha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar ID": {
+      "main": [
+        [
+          {
+            "node": "Planilha de documentos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Planilha de documentos": {
+      "main": [
+        [
+          {
+            "node": "Preparar documento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar documento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar documento": {
+      "main": [
+        [
+          {
+            "node": "Gerar PDF?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar PDF?": {
+      "main": [
+        [
+          {
+            "node": "ID novo?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder página",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ID novo?": {
+      "main": [
+        [
+          {
+            "node": "Gravar ID na planilha",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Copiar modelo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gravar ID na planilha": {
+      "main": [
+        [
+          {
+            "node": "Copiar modelo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copiar modelo": {
+      "main": [
+        [
+          {
+            "node": "Preencher modelo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preencher modelo": {
+      "main": [
+        [
+          {
+            "node": "Baixar PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Apagar cópia (erro)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baixar PDF": {
+      "main": [
+        [
+          {
+            "node": "Entregar PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Apagar cópia (erro)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apagar cópia (erro)": {
+      "main": [
+        [
+          {
+            "node": "Responder erro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Entregar PDF": {
+      "main": [
+        [
+          {
+            "node": "Apagar cópia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false,
+    "saveExecutionProgress": false
+  }
+}

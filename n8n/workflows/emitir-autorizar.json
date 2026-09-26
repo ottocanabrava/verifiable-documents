@@ -1,0 +1,49 @@
+{
+  "name": "Emitir documento: autorizar",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "name": "Chamado pelo fluxo de emissão",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===== Configuração (preencha no seu n8n; nunca no repositório) =====\nconst SENHA = '';  // senha da área de emissão; vazia = área desligada (404)\n// ====================================================================\n\n// Senha única do emissor, pela caixa de login do navegador (Basic Auth).\n// Ao atingir o limite de senhas erradas, o visitante fica bloqueado pela\n// janela, inclusive para a senha certa. O bloqueio expira sozinho.\nconst LIMITE = 10;      // senhas erradas por visitante\nconst JANELA = 60000;   // ms\n\nconst req = $input.first().json;\nconst negar = (status, mensagem) => [{ json: { autorizado: false, status, mensagem } }];\nif (!SENHA) return negar(404, 'Não encontrado.');\n\n// IP real do visitante: último endereço do X-Forwarded-For (ver validar-preparar).\nconst headers = req.headers || {};\nconst encaminhado = String(headers['x-forwarded-for'] || '').split(',').map(s => s.trim()).filter(Boolean);\nconst ip = encaminhado.pop() || String(headers['x-real-ip'] || 'desconhecido');\n\n// ponytail: contador nos dados estáticos do fluxo, sem trava entre execuções\n// simultâneas. Teto: limite aproximado; se precisar de exatidão, usar a versão Python.\nconst dados = $getWorkflowStaticData('global');\nconst agora = Date.now();\nconst falhas = dados.falhas || {};\nfor (const k of Object.keys(falhas)) {\n  falhas[k] = falhas[k].filter(t => agora - t < JANELA);\n  if (!falhas[k].length) delete falhas[k];\n}\ndados.falhas = falhas;\nconst minhas = falhas[ip] || [];\n\n// O bloqueio vem antes da comparação: durante a janela, nem a senha certa é testada.\nif (minhas.length >= LIMITE) return negar(429, 'Muitas tentativas. Aguarde um minuto.');\n\nconst auth = String(headers.authorization || '');\n// Sem credencial é só o navegador pedindo a senha; não conta como tentativa.\nif (!auth.startsWith('Basic ')) return negar(401, 'Senha necessária.');\nconst senha = Buffer.from(auth.slice(6), 'base64').toString('utf8').split(':').slice(1).join(':');\nif (senha === SENHA) return [{ json: { autorizado: true } }];\n\nminhas.push(agora);\nfalhas[ip] = minhas;\nreturn negar(401, 'Senha necessária.');\n"
+      },
+      "name": "Autorizar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Chamado pelo fluxo de emissão": {
+      "main": [
+        [
+          {
+            "node": "Autorizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false,
+    "saveExecutionProgress": false
+  }
+}
