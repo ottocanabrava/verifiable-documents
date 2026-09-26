@@ -1,0 +1,237 @@
+{
+  "name": "Validar documento",
+  "nodes": [
+    {
+      "id": "5b1f0c1e-0001-4000-8000-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "validar",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "3c7e2a4d-9b1f-4e62-8d5a-0a1d0a700001"
+    },
+    {
+      "id": "5b1f0c1e-0002-4000-8000-000000000002",
+      "name": "Preparar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Formato do ID e limite de consultas, ANTES de qualquer leitura da planilha.\nconst LIMITE = 10;      // consultas por visitante\nconst JANELA = 60000;   // ms\n\nconst req = $input.first().json;\nconst bruto = String((req.query || {}).id ?? '').trim();\nif (!bruto) return [{ json: { estado: 'vazio', id: '' } }];\n\n// IP real do visitante: último endereço do X-Forwarded-For (o que o proxy\n// da hospedagem acrescentou); o visitante não controla essa posição.\nconst headers = req.headers || {};\nconst encaminhado = String(headers['x-forwarded-for'] || '').split(',').map(s => s.trim()).filter(Boolean);\nconst ip = encaminhado.pop() || String(headers['x-real-ip'] || 'desconhecido');\n\n// ponytail: contador nos dados estáticos do fluxo (só em execução de produção,\n// sem trava entre execuções simultâneas). Teto: limite aproximado; se precisar\n// de exatidão, mover a validação para a versão Python.\nconst dados = $getWorkflowStaticData('global');\nconst agora = Date.now();\nconst hits = dados.hits || {};\nfor (const k of Object.keys(hits)) {\n  hits[k] = hits[k].filter(t => agora - t < JANELA);\n  if (!hits[k].length) delete hits[k];\n}\nconst meus = hits[ip] || [];\nif (meus.length >= LIMITE) {\n  dados.hits = hits;\n  return [{ json: { estado: 'limite', id: '' } }];\n}\nmeus.push(agora);\nhits[ip] = meus;\ndados.hits = hits;\n\n// ID fora do formato é rejeitado aqui, sem consultar a planilha.\nconst valido = /^[A-Za-z0-9]{12}$/.test(bruto);\nreturn [{ json: { estado: valido ? 'consultar' : 'nao_encontrado', id: valido ? bruto : '' } }];\n"
+      }
+    },
+    {
+      "id": "5b1f0c1e-0003-4000-8000-000000000003",
+      "name": "Consultar planilha?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c0a8f5e1-1111-4222-8333-944455556666",
+              "leftValue": "={{ $json.estado }}",
+              "rightValue": "consultar",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "5b1f0c1e-0004-4000-8000-000000000004",
+      "name": "Planilha de documentos",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        660,
+        200
+      ],
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "COLE_AQUI_O_ID_DA_PLANILHA"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultName": "Página1"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "id",
+              "lookupValue": "={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {
+          "outputFormatting": {
+            "values": {
+              "general": "FORMATTED_VALUE",
+              "date": "FORMATTED_STRING"
+            }
+          }
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "5b1f0c1e-0005-4000-8000-000000000005",
+      "name": "Montar página",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// ===== Configuração (preencha no seu n8n; nunca no repositório) =====\nconst EMISSOR = 'Escola Exemplo de Idiomas';\nconst URL_VALIDACAO = 'https://exemplo.com/webhook/validar';  // endereço público deste fluxo\nconst LINKEDIN_ORGANIZATION_ID = '';  // opcional: ID numérico da página no LinkedIn\n// ====================================================================\n\nconst TIPOS = {\n  certificado_curso: 'Certificado de conclusão de curso',\n  certificado_semestre: 'Certificado de conclusão de semestre',\n  certificado_trimestre: 'Certificado de conclusão de trimestre',\n  declaracao_matricula: 'Declaração de matrícula',\n  declaracao_termino_semestre: 'Declaração de término de semestre',\n};\nconst MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho',\n  'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];\n\nconst esc = v => String(v ?? '').replace(/[&<>\"']/g, c =>\n  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' })[c]);\nconst txt = v => String(v ?? '').trim();\n\nfunction data(valor) {  // 'AAAA-MM-DD' ou 'DD/MM/AAAA' -> {dia, mes, ano}, ou null\n  let m = txt(valor).match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);\n  if (m) return { ano: +m[1], mes: +m[2], dia: +m[3] };\n  m = txt(valor).match(/^(\\d{2})\\/(\\d{2})\\/(\\d{4})$/);\n  if (m) return { ano: +m[3], mes: +m[2], dia: +m[1] };\n  return null;\n}\n\nconst { estado, id } = $('Preparar').first().json;\nconst entrada = $input.all().map(i => i.json);\nlet resultado = estado;\nlet doc = null;\nlet linkedin = '';\n\nif (entrada.some(r => r.error)) {\n  resultado = 'indisponivel';  // falha ao ler a planilha: detalhe só no n8n\n} else if (estado === 'consultar') {\n  // Nenhuma linha, ou o mesmo ID em mais de uma linha (ambíguo): não encontrado.\n  const linhas = entrada.filter(r => txt(r.id) === id);\n  if (linhas.length !== 1) {\n    resultado = 'nao_encontrado';\n  } else {\n    const r = linhas[0];\n    const tipo = txt(r.tipo_documento);\n    const d = data(r.data_emissao);\n    if (txt(r.status).toLowerCase() !== 'ativo' || !TIPOS[tipo]) {\n      resultado = 'invalido';\n    } else {\n      resultado = 'valido';\n      // Só os campos públicos. Nunca CPF, RG, endereço ou outro dado do aluno.\n      doc = {\n        tipo: TIPOS[tipo],\n        nome: txt(r.nome),\n        curso: txt(r.curso),\n        carga_horaria: txt(r.carga_horaria),\n        data_emissao: d ? `${d.dia} de ${MESES[d.mes - 1]} de ${d.ano}` : '',\n      };\n      if (tipo.startsWith('certificado_') && d && URL_VALIDACAO) {\n        const params = {\n          startTask: 'CERTIFICATION_NAME',\n          name: `${TIPOS[tipo]} — ${txt(r.curso)}`,\n          ...(LINKEDIN_ORGANIZATION_ID ? { organizationId: LINKEDIN_ORGANIZATION_ID } : { organizationName: EMISSOR }),\n          issueYear: d.ano,\n          issueMonth: d.mes,\n          certUrl: `${URL_VALIDACAO}?id=${id}`,\n          certId: id,\n        };\n        linkedin = 'https://www.linkedin.com/profile/add?' + Object.entries(params)\n          .map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');\n      }\n    }\n  }\n}\n\nconst STATUS = { vazio: 200, valido: 200, invalido: 200, nao_encontrado: 404, limite: 429, indisponivel: 503 };\nconst CARDS = {\n  vazio: '',\n  invalido: '<div class=\"card\"><p class=\"status bad\">✗ Este documento não é mais válido.</p></div>',\n  nao_encontrado: '<div class=\"card\"><p class=\"status bad\">Documento não encontrado.</p>Confira o ID e tente de novo.</div>',\n  limite: '<div class=\"card\"><p class=\"status bad\">Muitas consultas.</p>Aguarde um minuto e tente de novo.</div>',\n  indisponivel: '<div class=\"card\"><p class=\"status bad\">Serviço temporariamente indisponível.</p>Tente de novo em alguns minutos.</div>',\n};\nconst card = resultado === 'valido' ? `<div class=\"card\">\n    <p class=\"status ok\">✓ Documento válido</p>\n    <dl>\n      <dt>Documento</dt><dd>${esc(doc.tipo)}</dd>\n      <dt>Nome</dt><dd>${esc(doc.nome)}</dd>\n      <dt>Curso</dt><dd>${esc(doc.curso)}</dd>\n      ${doc.carga_horaria ? `<dt>Carga horária</dt><dd>${esc(doc.carga_horaria)} horas</dd>` : ''}\n      <dt>Emissão</dt><dd>${esc(doc.data_emissao)}</dd>\n    </dl>\n    ${linkedin ? `<a class=\"linkedin\" href=\"${esc(linkedin)}\" target=\"_blank\" rel=\"noopener noreferrer\">Adicionar ao LinkedIn</a>` : ''}\n  </div>` : CARDS[resultado];\n\nconst html = `<!doctype html>\n<html lang=\"pt-BR\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Validação de documentos</title>\n<style>\n  body { margin: 0; font-family: system-ui, sans-serif; background: #f2f5f5; color: #1f2a2b; }\n  header { background: #0f3d3e; color: #fff; padding: 28px 16px; text-align: center; }\n  header h1 { margin: 0; font-size: 1.25rem; letter-spacing: .04em; }\n  header p { margin: 6px 0 0; opacity: .75; font-size: .9rem; }\n  main { max-width: 520px; margin: 24px auto; padding: 0 16px; }\n  form { display: flex; gap: 8px; }\n  input { flex: 1; min-width: 0; padding: 10px 12px; font-size: 1rem; border: 1px solid #c3d0d0; border-radius: 8px; }\n  button { padding: 10px 16px; font-size: 1rem; border: 0; border-radius: 8px; background: #0e7c7b; color: #fff; cursor: pointer; }\n  .card { margin-top: 20px; background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }\n  .status { font-weight: 700; font-size: 1.1rem; margin: 0 0 12px; }\n  .ok { color: #1d7a45; } .bad { color: #b3261e; }\n  dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; }\n  dt { color: #5f6f70; } dd { margin: 0; font-weight: 600; }\n  a.linkedin { display: block; margin-top: 16px; padding: 10px 16px; border-radius: 8px; background: #0a66c2;\n               color: #fff; text-align: center; text-decoration: none; font-weight: 600; }\n</style>\n</head>\n<body>\n<header>\n  <h1>VALIDAÇÃO DE DOCUMENTOS</h1>\n  ${EMISSOR ? `<p>${esc(EMISSOR)}</p>` : ''}\n</header>\n<main>\n  <form method=\"get\" action=\"\">\n    <input name=\"id\" value=\"${esc(id)}\" placeholder=\"ID de validação\" aria-label=\"ID de validação\" maxlength=\"64\" required>\n    <button type=\"submit\">Validar</button>\n  </form>\n  ${card}\n</main>\n</body>\n</html>`;\n\nreturn [{ json: { html, status: STATUS[resultado] } }];\n"
+      }
+    },
+    {
+      "id": "5b1f0c1e-0006-4000-8000-000000000006",
+      "name": "Responder",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1120,
+        300
+      ],
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseCode": "={{ $json.status }}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              },
+              {
+                "name": "Referrer-Policy",
+                "value": "no-referrer"
+              },
+              {
+                "name": "X-Content-Type-Options",
+                "value": "nosniff"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Preparar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar": {
+      "main": [
+        [
+          {
+            "node": "Consultar planilha?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar planilha?": {
+      "main": [
+        [
+          {
+            "node": "Planilha de documentos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar página",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Planilha de documentos": {
+      "main": [
+        [
+          {
+            "node": "Montar página",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar página",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar página": {
+      "main": [
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false,
+    "saveExecutionProgress": false
+  },
+  "pinData": {}
+}
