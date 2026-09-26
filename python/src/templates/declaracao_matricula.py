@@ -8,22 +8,22 @@ o PDF é só para o emissor e nunca deve ser servido pela rota pública.
 """
 from xml.sax.saxutils import escape
 
-from reportlab.lib.colors import HexColor, black
+from reportlab.lib.colors import white
+from reportlab.pdfbase.pdfmetrics import registerFontFamily
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import Paragraph
 
 from ..qr import draw_qr
+from .certificado_curso import ACCENT, DEEP, MUTED, TEXT  # também registra a Montserrat
 
 NOME = "Declaração de matrícula"
 PAGE_SIZE = A4
 REQUIRED = ("nome", "curso", "cpf", "rg", "endereco")
 
-LINK = HexColor("#3B8FD9")
-GRID = HexColor("#BBBBBB")
-MUTED = HexColor("#666666")
-
-BODY = ParagraphStyle("body", fontName="Helvetica", fontSize=9.5, leading=17)
+registerFontFamily("Montserrat-Regular", normal="Montserrat-Regular", bold="Montserrat-Bold")  # <b> no Paragraph
+BODY = ParagraphStyle("body", fontName="Montserrat-Regular", fontSize=10, leading=19,
+                      textColor=TEXT, alignment=4)
 
 
 def _b(value):
@@ -59,53 +59,75 @@ def draw(c, record, issuer):
 
 def draw_declaracao(c, record, issuer, titulo, abertura, situacao):
     width, height = PAGE_SIZE
-    left, right = 28, width - 28
+    left, right = 56, width - 56
 
-    # Cabeçalho: logo à esquerda, contato à direita
-    top, box_h, split = height - 23, 85, 238
-    c.setStrokeColor(GRID)
-    c.setLineWidth(0.6)
-    c.rect(left - 5, top - box_h, right - left + 10, box_h)
-    c.line(split, top, split, top - box_h)
-    if issuer.get("logo"):
-        c.drawImage(issuer["logo"], left + 5, top - box_h + 10, split - left - 20, box_h - 20,
-                    preserveAspectRatio=True, mask="auto")
-    c.setFillColor(black)
-    c.setFont("Helvetica-Bold", 9.5)
-    c.drawString(split + 7, top - 32, issuer["nome"])
-    c.setFillColor(LINK)
-    c.drawString(split + 7, top - 44, issuer.get("email", ""))
-    c.setFillColor(black)
-    c.drawString(split + 7, top - 56, issuer.get("site", ""))
+    # Faixa superior: logo branco à esquerda, contato à direita
+    band = height - 110
+    c.setFillColor(DEEP)
+    c.rect(0, band, width, 110, stroke=0, fill=1)
+    c.setFillColor(ACCENT)
+    c.rect(0, band - 4, width, 4, stroke=0, fill=1)
+    if issuer.get("logo_branco"):
+        c.drawImage(issuer["logo_branco"], left, band + 25, 170, 60,
+                    preserveAspectRatio=True, anchor="w", mask="auto")
+    else:
+        c.setFillColor(white)
+        c.setFont("Montserrat-Bold", 16)
+        c.drawString(left, band + 48, issuer["nome"])
+    c.setFillColor(white)
+    c.setFont("Montserrat-Bold", 9)
+    c.drawRightString(right, band + 62, issuer["nome"])
+    c.setFillColor(ACCENT)
+    c.setFont("Montserrat-Regular", 8.5)
+    c.drawRightString(right, band + 48, issuer.get("email", ""))
+    c.drawRightString(right, band + 35, issuer.get("site", ""))
 
-    c.setFont("Helvetica-Bold", 10)
-    c.drawCentredString(width / 2, height - 170, titulo)
+    # Título à esquerda, com traço de destaque
+    c.setFillColor(DEEP)
+    c.setFont("Montserrat-ExtraBold", 17)
+    c.drawString(left, band - 70, titulo)
+    c.setFillColor(ACCENT)
+    c.rect(left, band - 84, 48, 3, stroke=0, fill=1)
 
     p = Paragraph(body_text(record, issuer, abertura, situacao), BODY)
     _, h = p.wrap(right - left, 400)
-    p.drawOn(c, left, height - 212 - h)
+    top = band - 120
+    p.drawOn(c, left, top - h)
 
-    # "Cidade/UF, " normal + data em negrito, alinhados à direita
-    date_text = record["data_emissao_extenso"]
-    c.setFont("Helvetica", 9.5)
-    c.drawRightString(right - c.stringWidth(date_text, "Helvetica-Bold", 9.5), 463, f"{issuer['cidade']}, ")
-    c.setFont("Helvetica-Bold", 9.5)
-    c.drawRightString(right, 463, date_text)
+    # "Cidade/UF, " + data em negrito, logo abaixo do texto
+    t = c.beginText(left, top - h - 45)
+    t.setFillColor(TEXT)
+    t.setFont("Montserrat-Regular", 10)
+    t.textOut(f"{issuer['cidade']}, ")
+    t.setFont("Montserrat-Bold", 10)
+    t.textOut(record["data_emissao_extenso"])
+    c.drawText(t)
 
-    # Assinatura (imagem opcional, fora do repositório)
+    # Assinatura (imagem opcional, fora do repositório), à esquerda
+    sig_y = top - h - 150
     if issuer.get("assinatura"):
-        c.drawImage(issuer["assinatura"], right - 190, 372, 170, 60, preserveAspectRatio=True, mask="auto")
-    c.setStrokeColor(black)
-    c.line(right - 188, 367, right, 367)
-    c.setFont("Helvetica", 9.5)
-    c.drawRightString(right, 350, issuer.get("signatario", ""))
-    c.drawRightString(right, 333, issuer.get("cargo", ""))
-
+        c.drawImage(issuer["assinatura"], left, sig_y + 4, 170, 60,
+                    preserveAspectRatio=True, anchor="sw", mask="auto")
+    c.setStrokeColor(DEEP)
+    c.setLineWidth(1)
+    c.line(left, sig_y, left + 210, sig_y)
+    c.setFillColor(TEXT)
+    c.setFont("Montserrat-Bold", 10)
+    c.drawString(left, sig_y - 16, issuer.get("signatario", ""))
     c.setFillColor(MUTED)
-    c.setFont("Helvetica", 7.5)
-    c.drawString(left, 25, f"ID de validação: {record['id']}")
+    c.setFont("Montserrat-Regular", 9)
+    c.drawString(left, sig_y - 30, issuer.get("cargo", ""))
+
+    # Rodapé: ID à esquerda, QR à direita
+    c.setStrokeColor(ACCENT)
+    c.setLineWidth(0.8)
+    c.line(left, 100, right, 100)
+    c.setFillColor(MUTED)
+    c.setFont("Montserrat-Regular", 8)
+    c.drawString(left, 72, "Autenticidade verificável pelo QR code ou pelo ID:")
+    c.setFillColor(DEEP)
+    c.setFont("Montserrat-Bold", 10)
+    c.drawString(left, 57, f"ID de validação: {record['id']}")
 
     if record.get("validacao_url"):
-        draw_qr(c, record["validacao_url"], right - 56, 36, 56)
-        c.setFont("Helvetica", 6.5)
-        c.drawCentredString(right - 28, 25, "Verifique a autenticidade")
+        draw_qr(c, record["validacao_url"], right - 64, 30, 64)
