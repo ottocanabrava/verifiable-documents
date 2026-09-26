@@ -1,0 +1,10 @@
+# Arquivos fora da imagem Docker.
+.git/
+.github/
+.venv/
+tests/
+__pycache__/
+*.pyc
+*.pdf
+.env
+.env.*

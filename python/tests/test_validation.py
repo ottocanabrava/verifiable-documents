@@ -232,10 +232,10 @@ def test_emitir_pdf_com_erro_na_planilha_mostra_motivo(admin):
     assert r.status_code == 422 and "conteudo" in r.get_data(as_text=True)
 
 
-def test_no_cloud_run_rate_limit_usa_ip_real(monkeypatch):
+def test_atras_de_proxy_rate_limit_usa_ip_real(monkeypatch):
     import importlib
 
-    monkeypatch.setenv("K_SERVICE", "certificados")
+    monkeypatch.setenv("TRUST_PROXY", "1")
     mod = importlib.reload(app_module)
     try:
         mod.app.config["LOAD_RECORDS"] = lambda: RECORDS
@@ -246,5 +246,5 @@ def test_no_cloud_run_rate_limit_usa_ip_real(monkeypatch):
         assert c.get("/validar?id=naoExiste123", headers={"X-Forwarded-For": "2.2.2.2"}).status_code == 404
         assert c.get("/validar?id=naoExiste123", headers={"X-Forwarded-For": "1.1.1.1"}).status_code == 429
     finally:
-        monkeypatch.delenv("K_SERVICE")
+        monkeypatch.delenv("TRUST_PROXY")
         importlib.reload(app_module)

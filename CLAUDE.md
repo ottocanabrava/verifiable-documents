@@ -21,6 +21,12 @@ Antes de escrever código, pare no primeiro degrau que resolve:
   segurança (rate limit, IDs não sequenciais, nada de CPF/e-mail na
   resposta), nem o que foi pedido explicitamente.
 
+## Estrutura
+
+- `docs/especificacao.md` é o contrato. Regra nova entra lá primeiro e depois
+  nas duas implementações: `python/` e `n8n/`.
+- Testes da versão Python: `cd python && pytest`.
+
 ## Escopo da validação (0.2.0)
 
 - Todos os tipos (certificados e declarações) têm ID, QR code e validação.
@@ -32,6 +38,9 @@ Antes de escrever código, pare no primeiro degrau que resolve:
 ## Repositório público
 
 - Só dados fictícios. Nenhum dado real de aluno, nenhuma credencial.
+- Não identificar o cliente nem expor o ambiente dele: nada de nome, domínio,
+  IDs de planilhas, hospedagem contratada, custos, planos ou qual das
+  implementações ele usa. A documentação fala em "ambiente" e "restrições".
 - Credenciais só via variável de ambiente (ver `.env.example`).
 
 ## Versionamento

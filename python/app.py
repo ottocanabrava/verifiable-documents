@@ -21,10 +21,10 @@ app = Flask(__name__)
 app.config["LOAD_RECORDS"] = load_records
 app.config["LOAD_CONTEUDOS"] = load_conteudos
 
-# No Cloud Run (que define K_SERVICE) o acesso chega pelo proxy do Google: o IP
-# real do visitante é o último do X-Forwarded-For. Sem isso, o rate limit veria
-# todo mundo com o mesmo IP. Fora do Cloud Run, o cabeçalho é ignorado.
-if os.environ.get("K_SERVICE"):
+# Atrás de proxy reverso (TRUST_PROXY=1), o IP real do visitante vem do
+# X-Forwarded-For. Sem isso, o rate limit veria todo mundo com o IP do proxy.
+# Sem proxy, o cabeçalho é ignorado (senão qualquer um poderia forjá-lo).
+if os.environ.get("TRUST_PROXY") == "1":
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
 
 RATE_LIMIT = 10  # consultas por minuto, por IP

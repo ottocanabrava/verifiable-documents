@@ -26,9 +26,9 @@ def clean_id(raw):
 def _read_sheet(sheet_id):
     """Lê a primeira aba de uma planilha do Google, como lista de dicts.
 
-    Credencial padrão do Google (sem chave no código): no Cloud Run, a conta
-    de serviço do próprio serviço; localmente, `gcloud auth application-default
-    login`; ou um arquivo de chave em GOOGLE_APPLICATION_CREDENTIALS.
+    Credencial padrão do Google (nenhuma chave no código): a identidade do
+    ambiente onde o serviço roda, o login local da CLI do Google, ou um arquivo
+    de credencial em GOOGLE_APPLICATION_CREDENTIALS.
     """
     import google.auth
     import gspread
