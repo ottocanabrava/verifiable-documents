@@ -2,6 +2,8 @@ name: Criar tag de versão
 
 # Disparo manual (Actions -> Criar tag de versão -> Run workflow).
 # Marca com vX.Y.Z o commit cuja mensagem começa com "Versão X.Y.Z:".
+# Se a tag já existir, ela é movida para esse commit (útil após reescrita de
+# histórico).
 on:
   workflow_dispatch:
     inputs:
@@ -33,6 +35,6 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "v$VERSAO" "$COMMIT" -m "$VERSAO"
-          git push origin "v$VERSAO"
+          git tag -fa "v$VERSAO" "$COMMIT" -m "$VERSAO"
+          git push -f origin "v$VERSAO"
           echo "Tag v$VERSAO criada em $COMMIT"
