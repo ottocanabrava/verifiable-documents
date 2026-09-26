@@ -23,13 +23,14 @@ documentos define o que é possível rodar (por que, em
 | Validação | Página própria com rate limit por IP | Página servida por webhook do n8n |
 | Acesso ao Google | Identidade do ambiente, sem chave | OAuth da conta do emissor, sem chave |
 | Quando usar | Onde dá para hospedar um contêiner | Onde não dá, ou a equipe já opera n8n |
-| Testes | 52 testes automatizados | Validação manual dos fluxos |
+| Testes | 56 testes automatizados | Validação manual dos fluxos |
 
 ## Tipos de documento
 
 Certificado de conclusão de curso (com página de conteúdo programático), de
 semestre e de trimestre; declaração de matrícula e de término de semestre.
-Todos com ID, QR code e validação pública.
+Todos com ID, QR code e validação pública; os certificados válidos ganham um
+botão **Adicionar ao LinkedIn** já preenchido.
 
 ## Segurança e privacidade
 

@@ -12,9 +12,10 @@ src/
   engine.py            motor de geração, agnóstico de template
   validation.py        geração de ID, leitura das planilhas e visão pública
   qr.py                QR code de validação (gerador nativo do ReportLab)
+  linkedin.py          link "Adicionar ao LinkedIn" dos certificados
   templates/           um módulo de layout por tipo de documento
     assets/            fundo do certificado e fonte Montserrat (SIL OFL)
-tests/                 52 testes, incluindo o fluxo registro -> PDF -> QR -> página
+tests/                 56 testes, incluindo o fluxo registro -> PDF -> QR -> página
 Dockerfile
 DEPLOY.md              publicação com Docker
 .env.example           variáveis de ambiente (sem valores reais)
@@ -64,6 +65,8 @@ flask --app app run             # /validar (público) e /emitir (com senha)
   por IP.
 - O QR code aponta para `VALIDATION_BASE_URL?id=<id>` e também é um link
   clicável no PDF.
+- Certificados válidos ganham o botão **Adicionar ao LinkedIn** na página de
+  validação (`src/linkedin.py`); declarações e documentos revogados, não.
 
 Publicação: [`DEPLOY.md`](DEPLOY.md).
 
@@ -83,6 +86,7 @@ Copie `.env.example` para `.env` (já no `.gitignore`) e preencha.
 | `ISSUER_LOGO`, `ISSUER_LOGO_BRANCO`, `ISSUER_ASSINATURA` | Caminhos das imagens, **fora** do repositório (opcionais) |
 | `ADMIN_PASSWORD` | Senha da área `/emitir` |
 | `TRUST_PROXY` | `1` atrás de proxy reverso, para o rate limit usar o IP real |
+| `LINKEDIN_ORGANIZATION_ID` | Opcional: ID da página da instituição no LinkedIn (sem ele, usa `ISSUER_NOME`) |
 
 ## Adicionando um tipo de documento
 

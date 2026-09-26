@@ -10,7 +10,8 @@ próprio n8n.
 
 ## Planejado
 
-- `workflows/validar.json`: página pública de validação (webhook).
+- `workflows/validar.json`: página pública de validação (webhook), com o botão
+  "Adicionar ao LinkedIn" nos certificados válidos.
 - `workflows/emitir.json`: formulário protegido que gera o PDF a partir do
   modelo e o entrega ao emissor.
 - `workflows/ids.json`: preenche a coluna `id` das linhas novas da planilha.

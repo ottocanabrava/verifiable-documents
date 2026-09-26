@@ -56,6 +56,22 @@ cadastrado, ele não é gerado.
 - Limite de consultas por visitante, para dificultar abuso.
 - Todos os tipos são validáveis, inclusive as declarações.
 
+## Adicionar ao LinkedIn
+
+Na validação de um **certificado válido** (nunca declaração, nunca documento
+revogado), um botão abre o formulário de certificação do LinkedIn já preenchido:
+
+```
+https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME
+  &name=<Nome do tipo> — <curso>
+  &organizationId=<ID da página da instituição>   (ou organizationName=<nome>)
+  &issueYear=<ano de emissão>&issueMonth=<mês de emissão>
+  &certUrl=<URL de validação do documento>&certId=<id>
+```
+
+Todos os valores codificados na URL. Com a página da instituição no LinkedIn,
+use `organizationId` (liga o certificado à página); sem ela, `organizationName`.
+
 ## Emissão
 
 - Restrita ao emissor (autenticação).
