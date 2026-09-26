@@ -36,6 +36,18 @@ Para usar:
    `LINKEDIN_ORGANIZATION_ID`.
 4. Publique o fluxo.
 
+Também dá para criar o fluxo pela API do n8n (`POST /api/v1/workflows`, cabeçalho
+`X-N8N-API-KEY`), enviando só `name`, `nodes`, `connections` e `settings` do
+arquivo. Ele é criado sem publicar, e os passos 1 a 4 continuam valendo.
+
+Se salvar ou importar der **403 com "Forbidden" em texto puro** (não em JSON), quem
+bloqueou foi um firewall de aplicação (WAF) na frente do n8n, não o próprio n8n:
+alguns barram o JavaScript dos nós Code. O bloqueio é por conteúdo, não por
+tamanho, e vale também para edições futuras desses nós. A saída é pedir ao
+responsável pelo ambiente que libere o salvamento de fluxos (rotas `/rest/` e
+`/api/v1/`), informando o ID da requisição bloqueada que vem nos cabeçalhos da
+resposta.
+
 Testado no n8n 2.40.5 com uma planilha simulada: documento válido, declaração
 sem dados pessoais, revogado, tipo desconhecido, ID duplicado, malformado e
 inexistente, XSS vindo da planilha, falha da planilha (503) e limite de
