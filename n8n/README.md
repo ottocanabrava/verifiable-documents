@@ -43,7 +43,9 @@ Para usar:
 4. No topo do nó **Montar página**, preencha `EMISSOR`, `URL_VALIDACAO` (a URL de
    produção do webhook, que vai nos QR codes) e, se houver,
    `LINKEDIN_ORGANIZATION_ID`.
-5. Publique os dois fluxos.
+5. Publique os dois fluxos, o subfluxo primeiro. Depois de qualquer edição,
+   publique de novo: o n8n salva a edição, mas continua servindo a última
+   versão publicada.
 
 Também dá para criar os fluxos pela API do n8n (`POST /api/v1/workflows`,
 cabeçalho `X-N8N-API-KEY`), enviando só `name`, `nodes`, `connections` e
