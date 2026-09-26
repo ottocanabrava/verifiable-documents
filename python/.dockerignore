@@ -8,3 +8,11 @@ __pycache__/
 *.pdf
 .env
 .env.*
+.pytest_cache/
+# Credenciais nunca entram na imagem (são montadas em tempo de execução).
+*.json
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/

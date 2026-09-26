@@ -15,7 +15,7 @@ src/
   linkedin.py          link "Adicionar ao LinkedIn" dos certificados
   templates/           um módulo de layout por tipo de documento
     assets/            fundo do certificado e fonte Montserrat (SIL OFL)
-tests/                 56 testes, incluindo o fluxo registro -> PDF -> QR -> página
+tests/                 140 testes, incluindo o fluxo registro -> PDF -> QR -> página
 Dockerfile
 DEPLOY.md              publicação com Docker
 .env.example           variáveis de ambiente (sem valores reais)
@@ -58,13 +58,18 @@ flask --app app run             # /validar (público) e /emitir (com senha)
 
 - **/validar** rejeita IDs fora do formato antes de consultar a planilha,
   mostra só os campos públicos, trata como válido apenas `status = ativo` e
-  limita cada IP a 10 consultas por minuto.
+  limita cada visitante a 10 consultas por minuto (IPv6 contado por bloco
+  /64). Guarda a planilha em cache por 30 s: uma revogação leva no máximo
+  esse tempo para aparecer. ID repetido na planilha não valida. Se a planilha
+  não puder ser lida, responde 503 com uma mensagem genérica.
 - **/emitir** lista os documentos com "Baixar PDF" em cada um e sugere IDs
   novos. Usa a caixa de login do navegador (senha em `ADMIN_PASSWORD`); sem
-  ela configurada, a área não existe. Erros de senha contam no mesmo limite
-  por IP.
+  ela configurada, a área não existe. Depois de 10 senhas erradas em um
+  minuto, o visitante fica bloqueado até a janela passar, inclusive para a
+  senha certa. A emissão lê a planilha sem cache e marca IDs repetidos.
 - O QR code aponta para `VALIDATION_BASE_URL?id=<id>` e também é um link
-  clicável no PDF.
+  clicável no PDF. Sem `VALIDATION_BASE_URL`, a emissão falha em vez de gerar
+  um PDF sem QR.
 - Certificados válidos ganham o botão **Adicionar ao LinkedIn** na página de
   validação (`src/linkedin.py`); declarações e documentos revogados, não.
 
@@ -79,7 +84,7 @@ Copie `.env.example` para `.env` (já no `.gitignore`) e preencha.
 | `SHEET_ID` | Planilha de documentos (trecho entre `/d/` e `/edit` na URL) |
 | `CONTEUDOS_SHEET_ID` | Planilha com o conteúdo dos cursos |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Opcional. Sem ela, usa a credencial padrão do Google (identidade do ambiente ou login local da CLI) |
-| `VALIDATION_BASE_URL` | URL pública da página de validação (vai no QR) |
+| `VALIDATION_BASE_URL` | URL pública da página de validação (vai no QR e no link do LinkedIn). Obrigatória para emitir |
 | `ISSUER_NOME`, `ISSUER_EMAIL`, `ISSUER_SITE` | Nome e contato da instituição |
 | `ISSUER_RAZAO_SOCIAL`, `ISSUER_CNPJ`, `ISSUER_CIDADE`, `ISSUER_ENDERECO` | Dados da mantenedora, usados nas declarações |
 | `ISSUER_SIGNATARIO`, `ISSUER_CARGO` | Quem assina |

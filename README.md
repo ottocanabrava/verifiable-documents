@@ -1,11 +1,13 @@
 # Verifiable Documents
 
 Emissão de certificados e declarações em PDF a partir de uma planilha do
-Google, com **validação pública por QR code** e sem expor dados pessoais.
+Google, com **validação pública por QR code** que mostra só os dados públicos
+do documento.
 
 Cada documento tem um ID aleatório de 12 caracteres. Quem recebe o documento
-escaneia o QR e confere, numa página pública, se ele é autêntico, vendo só
-tipo, nome, curso, carga horária e data. CPF, RG e endereço nunca aparecem.
+escaneia o QR e consulta, numa página pública, o registro correspondente: se
+ele existe, se está ativo ou revogado, e só tipo, nome, curso, carga horária e
+data. CPF, RG e endereço nunca aparecem.
 
 > Repositório de portfólio: apenas dados fictícios e nenhuma credencial.
 
@@ -34,7 +36,7 @@ documentos define o que é possível rodar (por que, em
 | Validação | Página própria com rate limit por IP | Página servida por webhook do n8n |
 | Acesso ao Google | Identidade do ambiente, sem chave | OAuth da conta do emissor, sem chave |
 | Quando usar | Onde dá para hospedar um contêiner | Onde não dá, ou a equipe já opera n8n |
-| Testes | 56 testes automatizados | Validação manual dos fluxos |
+| Testes | 140 testes automatizados | Validação manual dos fluxos |
 
 ## Tipos de documento
 
@@ -43,12 +45,30 @@ semestre e de trimestre; declaração de matrícula e de término de semestre.
 Todos com ID, QR code e validação pública; os certificados válidos ganham um
 botão **Adicionar ao LinkedIn** já preenchido.
 
+## O que a validação confirma
+
+A consulta confirma que existe no registro do emissor um documento com aquele
+ID, qual o seu tipo, nome, curso, carga horária e data de emissão, e se ele está
+**ativo** ou **revogado**. O registro é lido com cache curto: uma revogação
+pode levar até um minuto para aparecer (30 s na implementação Python).
+
+Ela **não** detecta alteração posterior no arquivo PDF: quem confere deve
+comparar os dados mostrados na página com os do documento. Campos que a página
+não mostra (CPF, RG, endereço, horário das aulas, conteúdo programático) não são
+conferidos. Os documentos não têm assinatura digital nem hash, e o QR code é só
+um atalho para a consulta: vale conferir se a página aberta é do domínio do
+emissor.
+
 ## Segurança e privacidade
 
 - IDs aleatórios (~71 bits): não dá para descobrir documentos válidos por
   tentativa; entradas fora do formato são rejeitadas antes de qualquer consulta.
+  Um ID repetido na planilha não valida, em vez de escolher uma das linhas.
 - A validação pública expõe só os campos permitidos; o PDF das declarações
   (que contém CPF) nunca é servido publicamente.
+- Limite de consultas por visitante e de tentativas de senha na área de
+  emissão (com bloqueio temporário, que vale até para a senha certa).
+- Falhas internas respondem com uma mensagem genérica, sem detalhes técnicos.
 - Nenhuma credencial no código. O acesso ao Google respeita a política que
   bloqueia chaves de conta de serviço, em vez de desativá-la.
 

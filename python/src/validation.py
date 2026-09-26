@@ -59,10 +59,13 @@ def conteudo_do_curso(rows, curso):
 
 
 def find(records, doc_id):
+    """A linha com esse ID, ou None. ID repetido na planilha é ambíguo: nenhuma
+    linha é escolhida, e o documento não valida até a planilha ser corrigida."""
     doc_id = clean_id(doc_id)
     if doc_id is None:
         return None
-    return next((r for r in records if str(r.get("id", "")).strip() == doc_id), None)
+    matches = [r for r in records if str(r.get("id", "")).strip() == doc_id]
+    return matches[0] if len(matches) == 1 else None
 
 
 def public_view(record):

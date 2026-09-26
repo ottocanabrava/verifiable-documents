@@ -124,7 +124,7 @@ def draw_declaracao(c, record, issuer, titulo, abertura, situacao):
     c.line(left, 100, right, 100)
     c.setFillColor(MUTED)
     c.setFont("Montserrat-Regular", 8)
-    c.drawString(left, 72, "Autenticidade verificável pelo QR code ou pelo ID:")
+    c.drawString(left, 72, "Consulte o registro deste documento pelo QR code ou pelo ID:")
     c.setFillColor(DEEP)
     c.setFont("Montserrat-Bold", 10)
     c.drawString(left, 57, f"ID de validação: {record['id']}")

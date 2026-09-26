@@ -108,7 +108,7 @@ def draw_certificado(c, record, issuer, conclusao):
     if record.get("validacao_url"):
         draw_qr(c, record["validacao_url"], width - 30 - 56, 34, 56)
         c.setFont("Montserrat-Regular", 6.5)
-        c.drawCentredString(width - 30 - 28, 24, "Verifique a autenticidade")
+        c.drawCentredString(width - 30 - 28, 24, "Consulte o registro")
 
 
 def _conteudo_blocks(conteudo, size):

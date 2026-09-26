@@ -18,6 +18,9 @@ rode **uma única instância** do contêiner.
 - Variáveis: as do `.env.example` (IDs das planilhas, dados do emissor,
   `VALIDATION_BASE_URL`, `ADMIN_PASSWORD`), num arquivo de ambiente **fora do
   repositório** ou no cofre de segredos da plataforma.
+- O contêiner roda com um usuário sem privilégios: os arquivos montados
+  (imagens e, se houver, a credencial) precisam ter permissão de leitura para
+  ele (por exemplo, `chmod 644`).
 - Imagens do emissor (logo, logo claro, assinatura): montadas como arquivos
   somente leitura, com os caminhos em `ISSUER_LOGO`, `ISSUER_LOGO_BRANCO` e
   `ISSUER_ASSINATURA`.
