@@ -26,13 +26,13 @@ BACKGROUND = ASSETS / "fundo_certificado.png"
 for _weight in ("Regular", "Bold", "ExtraBold"):
     pdfmetrics.registerFont(TTFont(f"Montserrat-{_weight}", ASSETS / "fonts" / f"Montserrat-{_weight}.ttf"))
 
-ORANGE = HexColor("#EE791E")
-PURPLE = HexColor("#36296C")
-TEXT = HexColor("#2B2440")
-MUTED = HexColor("#6B6780")
+ACCENT = HexColor("#3DDBD9")  # turquesa: curso em destaque sobre a faixa escura
+DEEP = HexColor("#0F3D3E")    # verde-petróleo da faixa
+TEXT = HexColor("#1F2A2B")
+MUTED = HexColor("#5F6F70")
 
 
-# Fronteira entre a faixa roxa e a base branca do fundo, em pt a partir da base.
+# Fronteira entre a faixa escura e a base branca do fundo, em pt a partir da base.
 BAND_EDGE = 231
 
 
@@ -73,7 +73,7 @@ def draw_certificado(c, record, issuer, conclusao):
     # Fundo fornecido, sem alterações.
     c.drawImage(str(BACKGROUND), 0, 0, width, height)
 
-    # Faixa roxa: cabeçalho discreto (logo + título) e o bloco nome -> curso.
+    # Faixa escura: cabeçalho discreto (logo + título) e o bloco nome -> curso.
     if issuer.get("logo_branco"):
         c.drawImage(issuer["logo_branco"], cx - 45, height - 72, 90, 36, preserveAspectRatio=True, mask="auto")
     _centered(c, "CERTIFICADO DE CONCLUSÃO", "Montserrat-Bold", 13, height - 102, white, tracking=3)
@@ -83,7 +83,7 @@ def draw_certificado(c, record, issuer, conclusao):
     _centered(c, conclusao, "Montserrat-Regular", 12, 338, white, alpha=0.75)
     # O curso nunca passa de 80% do nome, para não disputar o foco com ele.
     course_size = min(34, round(name_size * 0.8))
-    _centered(c, record["curso"].upper(), "Montserrat-ExtraBold", course_size, 290, ORANGE, text_width, 16, tracking=2)
+    _centered(c, record["curso"].upper(), "Montserrat-ExtraBold", course_size, 290, ACCENT, text_width, 16, tracking=2)
 
     # Base branca: complementares, data/local e assinatura.
     _centered(c, f"Carga horária: {record['carga_horaria']} horas", "Montserrat-Regular", 11, 192, TEXT)
@@ -113,7 +113,7 @@ def draw_certificado(c, record, issuer, conclusao):
 
 def _conteudo_blocks(conteudo, size):
     """[(parágrafo, espaço antes, preso ao próximo)] para a lista de conteúdo."""
-    heading = ParagraphStyle("h", fontName="Montserrat-Bold", fontSize=size + 1, leading=size * 1.5, textColor=PURPLE)
+    heading = ParagraphStyle("h", fontName="Montserrat-Bold", fontSize=size + 1, leading=size * 1.5, textColor=DEEP)
     item = ParagraphStyle("i", fontName="Montserrat-Regular", fontSize=size, leading=size * 1.35,
                           textColor=TEXT, leftIndent=10, bulletIndent=0)
     blocks, grupo = [], None
@@ -165,7 +165,7 @@ def draw_conteudo(c, record, issuer):
     c.drawImage(str(BACKGROUND), 0, 0, width, height)
     c.restoreState()
     _centered(c, "CONTEÚDO PROGRAMÁTICO", "Montserrat-Bold", 11, height - 42, white, tracking=3)
-    _centered(c, record["curso"].upper(), "Montserrat-ExtraBold", 24, height - 76, ORANGE, tracking=2)
+    _centered(c, record["curso"].upper(), "Montserrat-ExtraBold", 24, height - 76, ACCENT, tracking=2)
 
     _centered(
         c,

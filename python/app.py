@@ -51,19 +51,19 @@ PAGE = """<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Validação de documentos</title>
 <style>
-  body { margin: 0; font-family: system-ui, sans-serif; background: #f4f3f8; color: #2b2440; }
-  header { background: #36296c; color: #fff; padding: 28px 16px; text-align: center; }
+  body { margin: 0; font-family: system-ui, sans-serif; background: #f2f5f5; color: #1f2a2b; }
+  header { background: #0f3d3e; color: #fff; padding: 28px 16px; text-align: center; }
   header h1 { margin: 0; font-size: 1.25rem; letter-spacing: .04em; }
   header p { margin: 6px 0 0; opacity: .75; font-size: .9rem; }
   main { max-width: 520px; margin: 24px auto; padding: 0 16px; }
   form { display: flex; gap: 8px; }
-  input { flex: 1; min-width: 0; padding: 10px 12px; font-size: 1rem; border: 1px solid #c9c5d6; border-radius: 8px; }
-  button { padding: 10px 16px; font-size: 1rem; border: 0; border-radius: 8px; background: #ee791e; color: #fff; cursor: pointer; }
+  input { flex: 1; min-width: 0; padding: 10px 12px; font-size: 1rem; border: 1px solid #c3d0d0; border-radius: 8px; }
+  button { padding: 10px 16px; font-size: 1rem; border: 0; border-radius: 8px; background: #0e7c7b; color: #fff; cursor: pointer; }
   .card { margin-top: 20px; background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
   .status { font-weight: 700; font-size: 1.1rem; margin: 0 0 12px; }
   .ok { color: #1d7a45; } .bad { color: #b3261e; }
   dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; }
-  dt { color: #6b6780; } dd { margin: 0; font-weight: 600; }
+  dt { color: #5f6f70; } dd { margin: 0; font-weight: 600; }
   a.linkedin { display: block; margin-top: 16px; padding: 10px 16px; border-radius: 8px; background: #0a66c2;
                color: #fff; text-align: center; text-decoration: none; font-weight: 600; }
 </style>
@@ -154,19 +154,19 @@ ADMIN_PAGE = """<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Emissão de documentos</title>
 <style>
-  body { margin: 0; font-family: system-ui, sans-serif; background: #f4f3f8; color: #2b2440; }
-  header { background: #36296c; color: #fff; padding: 20px 16px; }
+  body { margin: 0; font-family: system-ui, sans-serif; background: #f2f5f5; color: #1f2a2b; }
+  header { background: #0f3d3e; color: #fff; padding: 20px 16px; }
   header h1 { margin: 0; font-size: 1.1rem; letter-spacing: .04em; }
   main { max-width: 960px; margin: 20px auto; padding: 0 16px; }
   .card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 16px; }
   h2 { font-size: 1rem; margin: 0 0 8px; }
-  .muted { color: #6b6780; font-size: .9rem; }
-  code { font-size: 1rem; background: #f4f3f8; padding: 2px 6px; border-radius: 4px; user-select: all; }
+  .muted { color: #5f6f70; font-size: .9rem; }
+  code { font-size: 1rem; background: #f2f5f5; padding: 2px 6px; border-radius: 4px; user-select: all; }
   .ids { display: flex; flex-wrap: wrap; gap: 8px; }
   .table { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: .9rem; }
-  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #e6e3ee; white-space: nowrap; }
-  a.btn { display: inline-block; padding: 6px 12px; border-radius: 6px; background: #ee791e; color: #fff; text-decoration: none; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #e1e9e9; white-space: nowrap; }
+  a.btn { display: inline-block; padding: 6px 12px; border-radius: 6px; background: #0e7c7b; color: #fff; text-decoration: none; }
   .bad { color: #b3261e; }
 </style>
 </head>
