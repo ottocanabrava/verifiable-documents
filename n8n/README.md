@@ -5,8 +5,8 @@ Fluxos do [n8n](https://n8n.io) que implementam a mesma
 código: o PDF sai de um modelo no Google Slides e a validação é servida pelo
 próprio n8n.
 
-> Em desenvolvimento. Os fluxos entram aqui exportados **sem credenciais**, e
-> os modelos só com dados fictícios.
+> Validação pronta; emissão em desenvolvimento. Os fluxos entram aqui
+> exportados **sem credenciais**, e os modelos só com dados fictícios.
 
 ## Fluxos
 
@@ -31,7 +31,9 @@ nó **Preparar (subfluxo)**. Assim cada fluxo tem um só nó Code: há ambientes
 firewall (WAF) barra o salvamento quando os dois estão juntos (ver abaixo). O
 contador do limite de consultas fica nos dados estáticos do subfluxo.
 
-Para usar:
+Para usar (a planilha segue o formato da
+[especificação](../docs/especificacao.md#fonte-dos-dados): uma linha por
+documento, com um `id` aleatório de 12 letras ou dígitos):
 
 1. Crie uma credencial **Google Sheets OAuth2 API** (o nó do Google Sheets não
    aceita a credencial genérica "Google OAuth2 API").
