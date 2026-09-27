@@ -16,6 +16,8 @@ Antes de escrever código, pare no primeiro degrau que resolve:
   templates em `src/templates/` (um módulo por `tipo_documento`).
 - Sem código "pra escalar" nem scaffolding "pra depois".
 - Deletar > adicionar. Menos arquivos. Menor diff, depois de entender o problema.
+- Bug se corrige na causa, não no sintoma.
+- Lógica não trivial vem com uma verificação que roda (teste ou script).
 - Atalho consciente com teto conhecido leva comentário `# ponytail: <teto>, <quando evoluir>`.
 - Nunca simplificar: validação na entrada (ex.: `id` da rota `/validar`),
   segurança (rate limit, IDs não sequenciais, nada de CPF/e-mail na
