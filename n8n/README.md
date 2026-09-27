@@ -18,7 +18,8 @@ próprio n8n.
 - `workflows/qr.json`: QR code de validação desenhado no próprio n8n (PNG, sem
   biblioteca nem serviço externo), que o Slides busca por
   `<n8n>/webhook/qr?id=<id>`. Só aceita IDs no formato e só codifica o endereço
-  de validação configurado.
+  de validação configurado. Cor e logo no centro são opcionais (`COR` e `LOGO`); com
+  logo, usa a correção de erros mais alta (H) e a margem branca da norma.
 - `workflows/emitir*.json`: área com login pela conta Google onde a equipe
   cadastra documentos (formulário) e baixa o PDF gerado a partir do modelo no
   Google Slides, entregue só a ela, um por vez ou vários num ZIP. Também
