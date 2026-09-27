@@ -1,0 +1,168 @@
+{
+  "name": "QR code de validação",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "qr",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "qr"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===== Configuração (preencha no seu n8n; nunca no repositório) =====\nconst URL_VALIDACAO = 'https://exemplo.com/webhook/validar';  // o QR aponta para URL_VALIDACAO?id=<id>\nconst COR = '#000000';  // opcional: cor dos módulos (escura, para os leitores lerem bem)\n// ====================================================================\n\n// QR code (modo byte, correção M, versões 1 a 10) e PNG sem bibliotecas: o Slides\n// busca esta imagem pela URL e nenhum serviço de fora vê os IDs. Só aceita IDs no\n// formato e só gera o endereço de validação, nunca um texto qualquer.\nconst id = String(($input.first().json.query || {}).id || '');\nif (!/^[A-Za-z0-9]{12}$/.test(id)) return [{ json: { status: 404 } }];\nconst bytes = [...Buffer.from(`${URL_VALIDACAO}?id=${id}`, 'utf8')];\n\nconst ECC = [0, 10, 16, 26, 18, 24, 16, 18, 22, 22, 26];   // palavras de correção por bloco (nível M)\nconst BLOCOS = [0, 1, 1, 1, 2, 2, 4, 4, 4, 5, 5];\nconst brutos = v => {  // módulos disponíveis para dados e correção\n  let n = (16 * v + 128) * v + 64;\n  if (v >= 2) { const a = Math.floor(v / 7) + 2; n -= (25 * a - 10) * a - 55; if (v >= 7) n -= 36; }\n  return n;\n};\nconst capacidade = v => Math.floor(brutos(v) / 8) - ECC[v] * BLOCOS[v];\nlet ver = 1;\nwhile (ver <= 10 && 4 + (ver < 10 ? 8 : 16) + 8 * bytes.length > capacidade(ver) * 8) ver++;\nif (ver > 10) return [{ json: { status: 500 } }];\n\n// Bits: modo byte, tamanho, dados, terminador e enchimento.\nconst bits = [];\nconst poe = (v, n) => { for (let i = n - 1; i >= 0; i--) bits.push((v >>> i) & 1); };\npoe(4, 4); poe(bytes.length, ver < 10 ? 8 : 16); bytes.forEach(b => poe(b, 8));\nconst total = capacidade(ver) * 8;\npoe(0, Math.min(4, total - bits.length)); poe(0, (8 - bits.length % 8) % 8);\nfor (let p = 0xEC; bits.length < total; p ^= 0xEC ^ 0x11) poe(p, 8);\nconst dados = [];\nfor (let i = 0; i < bits.length; i += 8) dados.push(parseInt(bits.slice(i, i + 8).join(''), 2));\n\n// Reed-Solomon em GF(256).\nconst mul = (x, y) => { let z = 0; for (let i = 7; i >= 0; i--) { z = (z << 1) ^ ((z >>> 7) * 0x11D); z ^= ((y >>> i) & 1) * x; } return z; };\nfunction divisor(grau) {\n  const r = Array(grau).fill(0); r[grau - 1] = 1; let raiz = 1;\n  for (let i = 0; i < grau; i++) {\n    for (let j = 0; j < grau; j++) { r[j] = mul(r[j], raiz); if (j + 1 < grau) r[j] ^= r[j + 1]; }\n    raiz = mul(raiz, 0x02);\n  }\n  return r;\n}\nfunction resto(msg, div) {\n  const r = Array(div.length).fill(0);\n  for (const b of msg) { const f = b ^ r.shift(); r.push(0); div.forEach((c, i) => { r[i] ^= mul(c, f); }); }\n  return r;\n}\nconst nb = BLOCOS[ver], ne = ECC[ver], palavras = Math.floor(brutos(ver) / 8);\nconst curtos = nb - palavras % nb, tamCurto = Math.floor(palavras / nb), div = divisor(ne);\nconst blocos = [];\nfor (let i = 0, k = 0; i < nb; i++) {\n  const d = dados.slice(k, k + tamCurto - ne + (i < curtos ? 0 : 1)); k += d.length;\n  const e = resto(d, div); if (i < curtos) d.push(0); blocos.push(d.concat(e));\n}\nconst final = [];\nfor (let i = 0; i < blocos[0].length; i++) {\n  blocos.forEach((b, j) => { if (i !== tamCurto - ne || j >= curtos) final.push(b[i]); });\n}\n\n// Matriz: padrões fixos, dados, máscara com menor penalidade.\nconst n = ver * 4 + 17;\nconst mod = Array.from({ length: n }, () => Array(n).fill(false));\nconst fixo = Array.from({ length: n }, () => Array(n).fill(false));\nconst poeFixo = (x, y, v) => { mod[y][x] = v; fixo[y][x] = true; };\nfor (let i = 0; i < n; i++) { poeFixo(6, i, i % 2 === 0); poeFixo(i, 6, i % 2 === 0); }\nfor (const [cx, cy] of [[3, 3], [n - 4, 3], [3, n - 4]]) {\n  for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {\n    const x = cx + dx, y = cy + dy, d = Math.max(Math.abs(dx), Math.abs(dy));\n    if (x >= 0 && x < n && y >= 0 && y < n) poeFixo(x, y, d !== 2 && d !== 4);\n  }\n}\nif (ver > 1) {\n  const qtd = Math.floor(ver / 7) + 2, passo = Math.ceil((ver * 4 + 4) / (qtd * 2 - 2)) * 2, pos = [6];\n  for (let p = n - 7; pos.length < qtd; p -= passo) pos.splice(1, 0, p);\n  pos.forEach((a, i) => pos.forEach((b, j) => {\n    if ((i === 0 && j === 0) || (i === 0 && j === qtd - 1) || (i === qtd - 1 && j === 0)) return;\n    for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) poeFixo(a + dx, b + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);\n  }));\n}\nfunction formato(mascara) {  // nível M (00) + máscara\n  const d = mascara; let r = d;\n  for (let i = 0; i < 10; i++) r = (r << 1) ^ ((r >>> 9) * 0x537);\n  const b = ((d << 10) | r) ^ 0x5412, bit = i => ((b >>> i) & 1) === 1;\n  for (let i = 0; i <= 5; i++) poeFixo(8, i, bit(i));\n  poeFixo(8, 7, bit(6)); poeFixo(8, 8, bit(7)); poeFixo(7, 8, bit(8));\n  for (let i = 9; i < 15; i++) poeFixo(14 - i, 8, bit(i));\n  for (let i = 0; i < 8; i++) poeFixo(n - 1 - i, 8, bit(i));\n  for (let i = 8; i < 15; i++) poeFixo(8, n - 15 + i, bit(i));\n  poeFixo(8, n - 8, true);\n}\nformato(0);\nif (ver >= 7) {\n  let r = ver;\n  for (let i = 0; i < 12; i++) r = (r << 1) ^ ((r >>> 11) * 0x1F25);\n  const b = (ver << 12) | r;\n  for (let i = 0; i < 18; i++) { const v = ((b >>> i) & 1) === 1, a = n - 11 + i % 3, c = Math.floor(i / 3); poeFixo(a, c, v); poeFixo(c, a, v); }\n}\nlet i = 0;\nfor (let dir = n - 1; dir >= 1; dir -= 2) {\n  if (dir === 6) dir = 5;\n  for (let v = 0; v < n; v++) for (let j = 0; j < 2; j++) {\n    const x = dir - j, y = ((dir + 1) & 2) === 0 ? n - 1 - v : v;\n    if (!fixo[y][x] && i < final.length * 8) { mod[y][x] = ((final[i >>> 3] >>> (7 - (i & 7))) & 1) === 1; i++; }\n  }\n}\nconst MASCARAS = [(x, y) => (x + y) % 2 === 0, (x, y) => y % 2 === 0, x => x % 3 === 0, (x, y) => (x + y) % 3 === 0,\n  (x, y) => (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0, (x, y) => x * y % 2 + x * y % 3 === 0,\n  (x, y) => (x * y % 2 + x * y % 3) % 2 === 0, (x, y) => ((x + y) % 2 + x * y % 3) % 2 === 0];\nconst aplica = m => { for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (!fixo[y][x] && MASCARAS[m](x, y)) mod[y][x] = !mod[y][x]; };\nfunction penalidade() {  // regras 1, 2 e 4 da norma (a 3 só melhora a leitura, não é obrigatória)\n  let p = 0, escuros = 0;\n  for (let a = 0; a < n; a++) for (const lin of [true, false]) {\n    let run = 1;\n    for (let b = 1; b <= n; b++) {\n      const igual = b < n && (lin ? mod[a][b] === mod[a][b - 1] : mod[b][a] === mod[b - 1][a]);\n      if (igual) run++; else { if (run >= 5) p += run - 2; run = 1; }\n    }\n  }\n  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {\n    if (mod[y][x]) escuros++;\n    if (x < n - 1 && y < n - 1 && mod[y][x] === mod[y][x + 1] && mod[y][x] === mod[y + 1][x] && mod[y][x] === mod[y + 1][x + 1]) p += 3;\n  }\n  return p + Math.floor(Math.abs(escuros * 20 - n * n * 10) / (n * n)) * 10;\n}\nlet melhor = 0, menor = Infinity;\nfor (let m = 0; m < 8; m++) { aplica(m); formato(m); const p = penalidade(); if (p < menor) { menor = p; melhor = m; } aplica(m); }\naplica(melhor); formato(melhor);\n\n// PNG de 1 bit com paleta (fundo branco, módulos na COR), 10 px por módulo e 2 de margem (a página em volta é branca).\nconst ESC = 10, MARGEM = 2, lado = (n + 2 * MARGEM) * ESC, porLinha = Math.ceil(lado / 8);\nconst cru = Buffer.alloc((porLinha + 1) * lado);\nfor (let y = 0; y < lado; y++) for (let x = 0; x < lado; x++) {\n  const mx = Math.floor(x / ESC) - MARGEM, my = Math.floor(y / ESC) - MARGEM;\n  if (mx >= 0 && my >= 0 && mx < n && my < n && mod[my][mx]) cru[y * (porLinha + 1) + 1 + (x >> 3)] |= 0x80 >> (x & 7);\n}\nconst crcTab = Array.from({ length: 256 }, (_, k) => { let c = k; for (let j = 0; j < 8; j++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });\nconst crc = buf => { let c = 0xFFFFFFFF; for (const b of buf) c = crcTab[(c ^ b) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };\nconst u32 = v => { const b = Buffer.alloc(4); b.writeUInt32BE(v >>> 0); return b; };\nconst pedaco = (tipo, dadosPedaco) => {\n  const t = Buffer.concat([Buffer.from(tipo, 'ascii'), dadosPedaco]);\n  return Buffer.concat([u32(dadosPedaco.length), t, u32(crc(t))]);\n};\nconst zlib = [Buffer.from([0x78, 0x01])];  // deflate sem compressão, em blocos de até 65535\nfor (let k = 0; k < cru.length; k += 65535) {\n  const parte = cru.subarray(k, k + 65535), ultimo = k + 65535 >= cru.length ? 1 : 0;\n  zlib.push(Buffer.from([ultimo, parte.length & 0xFF, parte.length >> 8, ~parte.length & 0xFF, (~parte.length >> 8) & 0xFF]), parte);\n}\nlet a1 = 1, a2 = 0;\nfor (const b of cru) { a1 = (a1 + b) % 65521; a2 = (a2 + a1) % 65521; }\nzlib.push(u32((a2 << 16) | a1));\nconst hex = /^#[0-9a-fA-F]{6}$/.test(COR) ? COR.slice(1) : '000000';\nconst png = Buffer.concat([\n  Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]),\n  pedaco('IHDR', Buffer.concat([u32(lado), u32(lado), Buffer.from([1, 3, 0, 0, 0])])),\n  pedaco('PLTE', Buffer.from('ffffff' + hex, 'hex')),\n  pedaco('IDAT', Buffer.concat(zlib)),\n  pedaco('IEND', Buffer.alloc(0)),\n]);\nreturn [{ json: { status: 200 }, binary: { data: { data: png.toString('base64'), mimeType: 'image/png', fileName: 'qr.png', fileExtension: 'png' } } }];\n"
+      },
+      "name": "Desenhar QR",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9c3a1b2d-5e6f-4a7b-8c9d-0e1f2a3b4c6d",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Gerou?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "image/png"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "public, max-age=86400"
+              },
+              {
+                "name": "X-Content-Type-Options",
+                "value": "nosniff"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Entregar imagem",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        660,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Não encontrado.",
+        "options": {
+          "responseCode": 404,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Não encontrado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        660,
+        80
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Desenhar QR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Desenhar QR": {
+      "main": [
+        [
+          {
+            "node": "Gerou?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerou?": {
+      "main": [
+        [
+          {
+            "node": "Entregar imagem",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Não encontrado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false,
+    "saveExecutionProgress": false
+  }
+}
