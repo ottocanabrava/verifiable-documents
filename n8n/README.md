@@ -84,11 +84,9 @@ um `X-Forwarded-For` forjado é ignorado).
 
 ## Emissão (`emitir.json`)
 
-Webhook (GET) → **Autorizar** (subfluxo `emitir-autorizar.json`: senha pela
-caixa de login do navegador; 10 senhas erradas por minuto bloqueiam o
-visitante por um minuto, inclusive para a senha certa) → **Gerar ID** (nó
-Crypto, bytes aleatórios seguros) → **Planilha de documentos** → **Preparar
-documento** → uma de três saídas:
+Webhook (GET) → **Autorizar** (subfluxo `emitir-autorizar.json`: login com a
+conta Google) → **Gerar ID** (nó Crypto, bytes aleatórios seguros) →
+**Planilha de documentos** → **Preparar documento** → uma de três saídas:
 
 - sem parâmetro: página com os documentos da planilha e um botão "Baixar PDF"
   em cada linha (`?id=` ou, para linha sem ID, `?linha=`);
@@ -98,6 +96,14 @@ documento** → uma de três saídas:
   Drive, troca os marcadores e a caixa do QR (API do Slides), exporta o PDF,
   entrega ao emissor e apaga a cópia. Se falhar depois da cópia, a cópia também
   é apagada.
+
+Login: sem sessão, o **Autorizar** manda o navegador para o Google, com um
+`state` aleatório guardado num cookie. O Google volta em `/webhook/emitir-login`;
+o fluxo confere o `state`, troca o código pelo e-mail da conta (**Trocar
+código** → **Conta Google**) e o subfluxo abre uma sessão de 8 horas (cookie
+`HttpOnly`, `Secure`) se o e-mail estiver em `PERMITIDOS`. A lista é conferida
+de novo a cada acesso: tirar um e-mail corta o acesso na hora. Sessões e
+logins pendentes ficam nos dados estáticos do subfluxo.
 
 O `certificado_curso` ainda não é emitido por aqui: falta o modelo da página do
 conteúdo do curso.
@@ -110,13 +116,17 @@ Para usar, além dos passos da validação:
 2. Crie uma credencial **Google OAuth2 API** com o escopo
    `https://www.googleapis.com/auth/drive`, e ative as APIs do Google Drive e do
    Google Slides no projeto do cliente OAuth.
-3. Importe `emitir-autorizar.json` e depois `emitir.json`. No nó **Autorizar
+3. No mesmo cliente OAuth do Google (tipo "Aplicativo da Web"), acrescente o
+   URI de redirecionamento `<n8n>/webhook/emitir-login`.
+4. Importe `emitir-autorizar.json` e depois `emitir.json`. No nó **Autorizar
    (subfluxo)**, escolha "Emitir documento: autorizar"; nos dois nós de planilha,
    a credencial do Google Sheets e a planilha; nos nós de requisição (Copiar,
    Preencher, Baixar, Apagar), a credencial Google OAuth2 API.
-4. Preencha `SENHA` no nó **Autorizar** e, no topo do **Preparar documento**,
-   `EMISSOR`, `URL_VALIDACAO` e os IDs dos dois modelos.
-5. Publique os dois fluxos, o subfluxo primeiro. O endereço da emissão é
+5. No nó **Autorizar**, preencha `CLIENT_ID`, `CLIENT_SECRET`, `URL_EMISSAO` e
+   `PERMITIDOS` (e-mails ou `@dominio`); sem eles, a emissão responde 404. No
+   topo do **Preparar documento**, `EMISSOR`, `URL_VALIDACAO` e os IDs dos dois
+   modelos.
+6. Publique os dois fluxos, o subfluxo primeiro. O endereço da emissão é
    `<n8n>/webhook/emitir`.
 
 | Marcador | Certificado | Declaração |
@@ -129,8 +139,8 @@ Os textos que mudam por tipo são os mesmos da versão Python. Nas expressões,
 os nós usam `$node["..."]` e não `$('...')`: o WAF citado acima também barrou o
 salvamento quando `$('...')` aparecia nas expressões junto com o nó Code.
 
-Testado num ambiente real: login (sem senha, senha errada, senha certa), lista
-de documentos e falha no Slides (cópia apagada, erro 502 para o emissor).
+Testado num ambiente real, ainda com senha no lugar do login Google: lista de
+documentos e falha no Slides (cópia apagada, erro 502 para o emissor).
 
 ## Conexão com o Google
 

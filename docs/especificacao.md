@@ -89,9 +89,13 @@ use `organizationId` (liga o certificado à página); sem ela, `organizationName
 
 ## Emissão
 
-- Restrita ao emissor (autenticação), com limite de tentativas de senha: ao
-  atingir o limite, o cliente fica bloqueado por uma janela curta, inclusive
-  para a senha certa. O bloqueio expira sozinho.
+- Restrita ao emissor (autenticação), de um destes jeitos:
+  - senha própria, com limite de tentativas: ao atingir o limite, o cliente
+    fica bloqueado por uma janela curta, inclusive para a senha certa. O
+    bloqueio expira sozinho;
+  - login com a conta Google (OAuth), liberado só para os e-mails ou domínios
+    autorizados na configuração. A senha e o limite de tentativas ficam com o
+    Google.
 - O PDF das declarações contém CPF, RG e endereço: é entregue só ao emissor e
   **nunca** servido pela validação pública.
 - Nenhum PDF é armazenado pela validação: o documento é sempre gerado a partir
