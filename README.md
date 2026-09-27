@@ -1,8 +1,8 @@
 # Verifiable Documents
 
-Emissão de certificados e declarações em PDF a partir de uma planilha do
-Google, com **validação pública por QR code** que mostra só os dados públicos
-do documento.
+Emissão de certificados e declarações em PDF por uma página web restrita à
+equipe, com registro numa planilha do Google e **validação pública por QR
+code** que mostra só os dados públicos do documento.
 
 Cada documento tem um ID aleatório de 12 caracteres. Quem recebe o documento
 escaneia o QR e consulta, numa página pública, o registro correspondente: se
@@ -40,9 +40,10 @@ se são válidos. Participei diretamente da construção da solução, feita par
 rodar no ambiente da própria escola; este repositório reúne a sua implementação
 técnica. Não é um produto nem um serviço oferecido.
 
-Os documentos são emitidos a partir de uma planilha e entregues aos alunos,
-incluindo os que estudam por meio de empresas clientes, que acompanham os
-documentos entregues aos seus funcionários
+A equipe emite os documentos por uma página web de acesso restrito; por trás
+dela, uma planilha do Google guarda o registro de cada documento emitido. Os
+documentos vão para os alunos, incluindo os que estudam por meio de empresas
+clientes, que acompanham os documentos entregues aos seus funcionários
 ([contexto](docs/decisao.md#contexto)). Por isso cada documento tem um registro
 que qualquer pessoa confere pelo QR, na página do emissor, sem acesso aos dados
 internos.
