@@ -2,6 +2,11 @@
 
 ## Contexto
 
+Os documentos são conferidos por terceiros: parte dos alunos estuda por meio
+de empresas clientes, que acompanham com rigor os certificados e declarações
+entregues aos seus funcionários. Daí a validação pública por QR, com o estado
+de cada registro.
+
 O sistema precisa rodar no ambiente de quem emite os documentos, e ambientes
 diferentes impõem restrições diferentes. As que mais pesaram:
 
@@ -38,7 +43,7 @@ equipe já opera n8n, os fluxos cobrem os mesmos requisitos.
 | | Python | n8n |
 |---|---|---|
 | Layout do PDF | Adaptativo (tamanho de fonte calculado para nomes longos e conteúdo extenso) | Definido no modelo; nomes muito longos dependem de uma fonte já dimensionada no modelo |
-| Testes | 140 testes automatizados, incluindo fluxo completo | Validação manual dos fluxos |
+| Testes | 144 testes automatizados, incluindo fluxo completo | Validação manual dos fluxos |
 | Rate limit | Por IP, em memória | Mais simples; o formato do ID é a principal proteção |
 | Manutenção | Exige quem mexa em código | Ajustável pela própria equipe no editor visual |
 | Integrações (e-mail, outros sistemas) | Exigiriam código novo | Nativas da plataforma |
