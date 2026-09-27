@@ -13,8 +13,8 @@ próprio n8n.
 - `workflows/validar.json` e `workflows/validar-preparar.json`: página pública
   de validação (webhook), com o botão "Adicionar ao LinkedIn" nos certificados
   válidos. **Pronto.**
-- `workflows/emitir.json` e `workflows/emitir-autorizar.json`: área protegida
-  por senha que lista os documentos da planilha e gera o PDF a partir do modelo
+- `workflows/emitir.json`, `workflows/emitir-autorizar.json` e
+  `workflows/emitir-tela.json`: área com login pela conta Google que lista os documentos da planilha e gera o PDF a partir do modelo
   no Google Slides, entregue só ao emissor. Linha sem `id` ganha um ID novo,
   gravado na planilha, na primeira emissão.
 
@@ -97,8 +97,10 @@ conta Google) → **Gerar ID** (nó Crypto, bytes aleatórios seguros) →
   entrega ao emissor e apaga a cópia. Se falhar depois da cópia, a cópia também
   é apagada.
 
-Login: sem sessão, o **Autorizar** manda o navegador para o Google, com um
-`state` aleatório guardado num cookie. O Google volta em `/webhook/emitir-login`;
+Login: sem sessão, o **Autorizar** mostra a tela com o botão "Fazer login com o
+Google" (padrão visual do Google, sem script: é um link), com um `state`
+aleatório guardado num cookie. O HTML da tela fica num terceiro subfluxo,
+`emitir-tela.json`, porque o WAF barrou salvá-lo junto com o nó Code. O Google volta em `/webhook/emitir-login`;
 o fluxo confere o `state`, troca o código pelo e-mail da conta (**Trocar
 código** → **Conta Google**) e o subfluxo abre uma sessão de 8 horas (cookie
 `HttpOnly`, `Secure`) se o e-mail estiver em `PERMITIDOS`. A lista é conferida
@@ -118,15 +120,18 @@ Para usar, além dos passos da validação:
    Google Slides no projeto do cliente OAuth.
 3. No mesmo cliente OAuth do Google (tipo "Aplicativo da Web"), acrescente o
    URI de redirecionamento `<n8n>/webhook/emitir-login`.
-4. Importe `emitir-autorizar.json` e depois `emitir.json`. No nó **Autorizar
-   (subfluxo)**, escolha "Emitir documento: autorizar"; nos dois nós de planilha,
+4. Importe `emitir-autorizar.json`, `emitir-tela.json` e depois `emitir.json`.
+   Nos nós **Autorizar (subfluxo)** e **Criar sessão (subfluxo)**, escolha
+   "Emitir documento: autorizar"; no **Montar tela (subfluxo)**, "Emitir
+   documento: tela de login"; nos dois nós de planilha,
    a credencial do Google Sheets e a planilha; nos nós de requisição (Copiar,
    Preencher, Baixar, Apagar), a credencial Google OAuth2 API.
 5. No nó **Autorizar**, preencha `CLIENT_ID`, `CLIENT_SECRET`, `URL_EMISSAO` e
-   `PERMITIDOS` (e-mails ou `@dominio`); sem eles, a emissão responde 404. No
+   `PERMITIDOS` (e-mails ou `@dominio`); sem eles, a emissão responde 404. Na
+   tela de login, `EMISSOR`, `LOGO_URL` (opcional) e `COR`. No
    topo do **Preparar documento**, `EMISSOR`, `URL_VALIDACAO` e os IDs dos dois
    modelos.
-6. Publique os dois fluxos, o subfluxo primeiro. O endereço da emissão é
+6. Publique os três fluxos, os subfluxos primeiro. O endereço da emissão é
    `<n8n>/webhook/emitir`.
 
 | Marcador | Certificado | Declaração |
@@ -139,8 +144,10 @@ Os textos que mudam por tipo são os mesmos da versão Python. Nas expressões,
 os nós usam `$node["..."]` e não `$('...')`: o WAF citado acima também barrou o
 salvamento quando `$('...')` aparecia nas expressões junto com o nó Code.
 
-Testado num ambiente real, ainda com senha no lugar do login Google: lista de
-documentos e falha no Slides (cópia apagada, erro 502 para o emissor).
+Testado num ambiente real: tela de login (cookie do `state` passando pelo
+proxy), volta do Google com `state` errado (tela de novo, com aviso) e com
+código falso (erro 502). Antes, ainda com senha no lugar do login Google: lista
+de documentos e falha no Slides (cópia apagada, erro 502 para o emissor).
 
 ## Conexão com o Google
 

@@ -125,6 +125,30 @@
               },
               "renameOutput": true,
               "outputKey": "trocar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "b17e62b8-8fc0-427e-b0b9-6e7f8091a2b3",
+                    "leftValue": "={{ $json.acao }}",
+                    "rightValue": "entrar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "entrar"
             }
           ]
         },
@@ -214,6 +238,63 @@
       "position": [
         660,
         480
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseCode": "={{ $json.status }}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              },
+              {
+                "name": "Set-Cookie",
+                "value": "={{ $json.cookie }}"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              },
+              {
+                "name": "Referrer-Policy",
+                "value": "no-referrer"
+              },
+              {
+                "name": "X-Content-Type-Options",
+                "value": "nosniff"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Tela de login",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        880,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "COLE_AQUI_O_ID_DO_SUBFLUXO_DA_TELA"
+        },
+        "options": {}
+      },
+      "name": "Montar tela (subfluxo)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        660,
+        640
       ]
     },
     {
@@ -789,7 +870,25 @@
         ],
         [
           {
+            "node": "Montar tela (subfluxo)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
             "node": "Negar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar tela (subfluxo)": {
+      "main": [
+        [
+          {
+            "node": "Tela de login",
             "type": "main",
             "index": 0
           }
