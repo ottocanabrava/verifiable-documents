@@ -32,10 +32,6 @@ TEXT = HexColor("#1F2A2B")
 MUTED = HexColor("#5F6F70")
 
 
-# Fronteira entre a faixa escura e a base branca do fundo, em pt a partir da base.
-BAND_EDGE = 231
-
-
 def _fit_font_size(c, text, font, max_size, max_width, min_size):
     size = max_size
     while size > min_size and c.stringWidth(text, font, size) > max_width:
