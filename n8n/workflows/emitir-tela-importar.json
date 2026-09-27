@@ -1,0 +1,61 @@
+{
+  "name": "Emitir documento: importar CSV",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "name": "Chamado pelo fluxo de emissão",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6c281d63-3a7b-4d28-8b6c-192a3b4c5d6e",
+              "name": "html",
+              "type": "string",
+              "value": "=<!doctype html>\n<html lang=\"pt-BR\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Importar CSV</title>\n<style>:root { --cor: {{ $json.cor }}; } {{ $json.css }}\n.csv { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }\n.csv input[type=file] { flex: 1; min-width: 220px; padding: 10px; border: 1px dashed #cfcbe0; border-radius: 8px; }\nol { margin: 0 0 16px; padding-left: 20px; color: #3d3a4d; line-height: 1.6; }\n.acoes { display: flex; justify-content: flex-end; }\n</style>\n</head>\n<body>\n<header class=\"topo\"><div>{{ $json.logo_url ? '<img src=\"' + $json.logo_url + '\" alt=\"\">' : '' }}<b>Emissão de documentos</b><small>{{ $json.email }}</small></div></header>\n<main>\n{{ $json.erro ? '<div class=\"erro\">' + $json.erro + '</div>' : '' }}\n<div class=\"card\" id=\"csv\">\n  <h1>Importar vários documentos (CSV)</h1>\n  <ol>\n    <li>Baixe o modelo e preencha uma linha por documento (até {{ $json.limite_csv }}). No Excel ou no Google Planilhas, salve como CSV.</li>\n    <li>Envie o arquivo. Se alguma linha tiver erro, nada é gravado e a tela mostra o que corrigir.</li>\n    <li>Com tudo certo, os documentos entram na planilha e você baixa todos em ZIP.</li>\n  </ol>\n  <p class=\"muted\"><a href=\"data:text/csv;charset=utf-8,%EF%BB%BFtipo_documento%3Bnome%3Bcurso%3Bcarga_horaria%3Bdata_emissao%3Bcpf%3Brg%3Bendereco%3Bdia_aula%0D%0Acertificado_semestre%3BNome%20Sobrenome%3BIngl%C3%AAs%3B60%3B27/09/2026%3B%3B%3B%3B%0D%0Adeclaracao_matricula%3BNome%20Sobrenome%3BIngl%C3%AAs%3B%3B27/09/2026%3B000.000.000-00%3B0000000%3BRua%20Exemplo%2C%20100%2C%20Centro%2C%20Cidade/UF%3Bter%C3%A7as%20e%20quintas%2C%2019h%0D%0A\" download=\"modelo-documentos.csv\">Baixar modelo do CSV</a> · <a href=\"?\">Voltar para a lista</a></p>\n  <form class=\"csv\" method=\"post\" action=\"\" enctype=\"multipart/form-data\">\n    <input type=\"hidden\" name=\"lote\" value=\"1\">\n    <input type=\"file\" name=\"csv\" accept=\".csv,text/csv\" required>\n    <button class=\"btn\" type=\"submit\">Enviar CSV</button>\n  </form>\n</div>\n</main>\n</body>\n</html>\n"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "name": "Montar importar CSV",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Chamado pelo fluxo de emissão": {
+      "main": [
+        [
+          {
+            "node": "Montar importar CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false,
+    "saveExecutionProgress": false
+  }
+}

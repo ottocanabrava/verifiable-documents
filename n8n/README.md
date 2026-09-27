@@ -15,8 +15,10 @@ próprio n8n.
   válidos. **Pronto.**
 - `workflows/emitir*.json`: área com login pela conta Google onde a equipe
   cadastra documentos (formulário) e baixa o PDF gerado a partir do modelo no
-  Google Slides, entregue só a ela. Um fluxo principal e cinco subfluxos
-  (autorizar, identidade visual e uma tela cada: login, lista, formulário).
+  Google Slides, entregue só a ela, um por vez ou vários num ZIP. Também
+  importa um CSV com vários documentos. Um fluxo principal e sete subfluxos
+  (autorizar, identidade visual, pacote ZIP e uma tela cada: login, lista,
+  formulário, importar CSV).
 
 ## Validação (`validar.json`)
 
@@ -86,7 +88,8 @@ um `X-Forwarded-For` forjado é ignorado).
 
 Webhook (GET e POST) → **Autorizar** (subfluxo `emitir-autorizar.json`: login
 com a conta Google) → **Gerar ID** (nó Crypto, bytes aleatórios seguros) →
-**Planilha de documentos** → **Preparar documento** → uma de quatro saídas:
+(se veio um CSV, **Ler CSV** antes) → **Planilha de documentos** → **Preparar
+documento** → uma destas saídas:
 
 - sem parâmetro: lista dos documentos da planilha, com o nome legível do tipo,
   a situação e um botão "Baixar PDF" em cada um (`?id=` ou, para linha sem ID,
@@ -97,12 +100,22 @@ com a conta Google) → **Gerar ID** (nó Crypto, bytes aleatórios seguros) →
   gravado na planilha como texto puro (**Anotar na planilha**) e volta para a
   lista com o botão de baixar o PDF do documento novo. Com erro, o formulário
   volta preenchido e com o aviso;
+- `?importar`: envio de um CSV (separado por `;`, `,` ou tabulação; colunas como
+  na planilha, com sinônimos como "tipo" e "data"; o tipo pode vir pelo nome,
+  como "Declaração de matrícula"), até 100 documentos. Tudo ou nada: com erro em
+  alguma linha, nada é gravado e a tela lista as linhas a corrigir. Com tudo
+  certo, grava todos e volta para a lista com "Baixar todos (ZIP)", em partes de
+  até 15;
+- `?zip=<id>,<id>…` (ou os marcados na lista): gera os PDFs, dá a cada um o
+  nome do arquivo (numerando nomes repetidos), compacta no subfluxo **pacote
+  ZIP** e entrega "Documentos DD-MM-AAAA.zip". Até 15 por vez, porque o ZIP é
+  montado dentro da requisição e uma conexão longa cai por tempo;
 - problema na linha (tipo desconhecido, campo obrigatório vazio, data
   inválida, ID duplicado): a lista, com o erro no topo;
 - tudo certo: grava o ID novo na planilha (se for o caso), copia o modelo no
   Drive, troca os marcadores e a caixa do QR (API do Slides), exporta o PDF,
   entrega ao emissor (arquivo "Nome Último-sobrenome - Tipo do documento.pdf")
-  e apaga a cópia. Se falhar depois da cópia, a cópia também
+  e apaga a cópia (em paralelo à entrega; no ZIP, todas as cópias). Se falhar depois da cópia, a cópia também
   é apagada.
 
 Login: sem sessão, o **Autorizar** mostra a tela de login, no leiaute do login
@@ -133,11 +146,12 @@ Para usar, além dos passos da validação:
    Google Slides no projeto do cliente OAuth.
 3. No mesmo cliente OAuth do Google (tipo "Aplicativo da Web"), acrescente o
    URI de redirecionamento `<n8n>/webhook/emitir-login`.
-4. Importe os cinco subfluxos (`emitir-autorizar.json`, `emitir-identidade.json`
-   e os três `emitir-tela-*.json`) e depois `emitir.json`. Nos nós
+4. Importe os sete subfluxos (`emitir-autorizar.json`, `emitir-identidade.json`,
+   `emitir-zip.json` e os quatro `emitir-tela-*.json`) e depois `emitir.json`. Nos nós
    **Autorizar (subfluxo)** e **Criar sessão (subfluxo)**, escolha "Emitir
-   documento: autorizar"; nos nós **Identidade**, **Tela de login**, **Lista**
-   e **Formulário (subfluxo)**, o subfluxo correspondente; nos três nós de
+   documento: autorizar"; nos nós **Identidade**, **Tela de login**, **Lista**,
+   **Formulário**, **Importar CSV** e **Pacote ZIP (subfluxo)**, o subfluxo
+   correspondente; nos três nós de
    planilha, a credencial do Google Sheets e a planilha; nos nós de requisição
    (Copiar, Preencher, Baixar, Apagar), a credencial Google OAuth2 API.
 5. No nó **Autorizar**, preencha `CLIENT_ID`, `CLIENT_SECRET`, `URL_EMISSAO` e
@@ -160,7 +174,10 @@ salvo. Barrou o nó Code junto com uma página HTML, duas telas HTML no mesmo
 fluxo e `$('...')` nas expressões junto com o nó Code (daí `$node["..."]`).
 Cada tela sozinha passa.
 
-Testado num ambiente real: lista, formulário (campo faltando, HTML no nome
+Testado num ambiente real: importação de CSV (com erros: nada gravado e linhas
+apontadas; válido, com `;`, BOM, aspas e tipo pelo nome: gravado e volta para a
+lista com o ZIP), pedido de ZIP até o Slides (cópias apagadas na falha), lista,
+formulário (campo faltando, HTML no nome
 escapado, cadastro gravado na planilha, sem CPF por ser certificado, e volta
 para a lista com o documento novo), tela de login (cookie do `state` passando
 pelo proxy) e volta do Google com `state` errado (tela de novo, com aviso) ou
