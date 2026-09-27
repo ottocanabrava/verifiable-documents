@@ -15,6 +15,10 @@ próprio n8n.
 - `workflows/validar.json` e `workflows/validar-preparar.json`: página pública
   de validação (webhook), com o botão "Adicionar ao LinkedIn" nos certificados
   válidos. **Pronto.**
+- `workflows/qr.json`: QR code de validação desenhado no próprio n8n (PNG, sem
+  biblioteca nem serviço externo), que o Slides busca por
+  `<n8n>/webhook/qr?id=<id>`. Só aceita IDs no formato e só codifica o endereço
+  de validação configurado.
 - `workflows/emitir*.json`: área com login pela conta Google onde a equipe
   cadastra documentos (formulário) e baixa o PDF gerado a partir do modelo no
   Google Slides, entregue só a ela, um por vez ou vários num ZIP. Também
@@ -47,7 +51,9 @@ documento, com um `id` aleatório de 12 letras ou dígitos):
    e a primeira aba.
 4. No topo do nó **Montar página**, preencha `EMISSOR`, `URL_VALIDACAO` (a URL de
    produção do webhook, que vai nos QR codes) e, se houver,
-   `LINKEDIN_ORGANIZATION_ID`.
+   `LINKEDIN_ORGANIZATION_ID`. A identidade visual é opcional: `LOGO_URL`, `COR`
+   (cabeçalho e botão) e `COR_DESTAQUE` (faixa sob o cabeçalho). Em branco, a
+   página fica como no exemplo do README principal.
 5. Publique os dois fluxos, o subfluxo primeiro. Depois de qualquer edição,
    publique de novo: o n8n salva a edição, mas continua servindo a última
    versão publicada.
@@ -87,7 +93,7 @@ um `X-Forwarded-For` forjado é ignorado).
 | ID novo | Listado na emissão, colado na planilha à mão | Gerado no cadastro, ou na primeira emissão de uma linha sem ID |
 | Vários PDFs | Um por vez | Vários num ZIP (até 15 por vez) |
 | Nome do PDF | "Tipo - Nome completo.pdf" | "Nome Último-sobrenome - Tipo.pdf" |
-| QR code | Desenhado no próprio serviço | Imagem de um serviço externo (`QR_API`), que vê a URL de validação, só com o ID |
+| QR code | Desenhado no próprio serviço | Desenhado no fluxo `qr.json` (cor opcional), buscado pelo Slides |
 | Nome longo | Fonte reduzida até caber | Tamanho fixo do modelo |
 
 ## Emissão (`emitir.json`)
@@ -147,7 +153,9 @@ mesma planilha, escolhida no nó **Conteúdo dos cursos**). Os itens do curso
 (sem diferenciar maiúsculas) saem na ordem da aba, com o semestre em
 maiúsculas como título, em duas colunas. Sem conteúdo cadastrado, ou com
 conteúdo que não cabe na página (cerca de 26 linhas por coluna), o PDF não é
-gerado e a tela diz o porquê.
+gerado e a tela diz o porquê. Os títulos de semestre saem em maiúsculas; com os
+IDs das duas caixas de conteúdo do modelo em `CAIXAS_CONTEUDO` (lidos uma vez
+pela API do Slides), saem como escritos na aba, em negrito e na `COR_TITULOS`.
 
 Para usar, além dos passos da validação:
 
@@ -172,7 +180,9 @@ Para usar, além dos passos da validação:
 5. No nó **Autorizar**, preencha `CLIENT_ID`, `CLIENT_SECRET`, `URL_EMISSAO` e
    `PERMITIDOS` (e-mails ou `@dominio`); sem eles, a emissão responde 404. No
    subfluxo de identidade visual, `emissor`, `logo_url` (opcional) e `cor`. No
-   topo do **Preparar documento**, `URL_VALIDACAO` e os IDs dos três modelos.
+   topo do **Preparar documento**, `URL_VALIDACAO`, `URL_QR` (o endereço de
+   produção do fluxo `qr.json`, publicado antes) e os IDs dos três modelos. No
+   `qr.json`, `URL_VALIDACAO` e, se quiser, a `COR` dos módulos (escura).
 6. Publique todos os fluxos, os subfluxos primeiro. O endereço da emissão é
    `<n8n>/webhook/emitir`.
 
