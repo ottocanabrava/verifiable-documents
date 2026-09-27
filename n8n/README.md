@@ -5,8 +5,10 @@ Fluxos do [n8n](https://n8n.io) que implementam a mesma
 código: o PDF sai de um modelo no Google Slides e a validação é servida pelo
 próprio n8n.
 
-> Validação pronta; emissão em teste. Os fluxos entram aqui
-> exportados **sem credenciais**, e os modelos só com dados fictícios.
+> Validação pronta; emissão publicada e testada até a geração do PDF, que
+> ainda depende da configuração do Google no ambiente. Os fluxos entram aqui
+> exportados **sem credenciais** nem dados da escola: os valores de
+> configuração ficam só no n8n.
 
 ## Fluxos
 
@@ -80,7 +82,11 @@ um `X-Forwarded-For` forjado é ignorado).
 | CSP | Própria, bloqueia qualquer script | O n8n substitui pela dele (sandbox); a proteção contra XSS é o escape de todos os valores |
 | ID na planilha | Espaços nas pontas são ignorados | Comparado exatamente como está na célula |
 | Histórico | Não há | Execuções não são salvas, para que os dados da linha consultada não fiquem no n8n |
-| ID novo | Listado na emissão, colado na planilha à mão | Gerado e gravado na planilha na primeira emissão da linha |
+| Acesso à emissão | Senha, com limite de tentativas | Login com a conta Google (e-mails ou domínio autorizados) |
+| Cadastro | Direto na planilha | Formulário, CSV com vários documentos ou direto na planilha |
+| ID novo | Listado na emissão, colado na planilha à mão | Gerado no cadastro, ou na primeira emissão de uma linha sem ID |
+| Vários PDFs | Um por vez | Vários num ZIP (até 15 por vez) |
+| Nome do PDF | "Tipo - Nome completo.pdf" | "Nome Último-sobrenome - Tipo.pdf" |
 | QR code | Desenhado no próprio serviço | Imagem de um serviço externo (`QR_API`), que vê a URL de validação, só com o ID |
 | Nome longo | Fonte reduzida até caber | Tamanho fixo do modelo |
 
@@ -190,6 +196,12 @@ e a geração do PDF, que dependem da configuração do Google.
 Credenciais OAuth2 no n8n, autorizadas com a conta do emissor (sem chave de
 conta de serviço): **Google Sheets OAuth2 API** nos nós de planilha e **Google
 OAuth2 API** (escopo do Drive) nas chamadas ao Drive e ao Slides, as duas com o
-mesmo cliente OAuth.
+mesmo cliente OAuth. No projeto desse cliente, ative as APIs do Google Sheets,
+do Google Drive e do Google Slides.
+
+O login da emissão usa o mesmo cliente OAuth (tipo "Aplicativo da Web"), com o
+ID e a chave secreta no nó **Autorizar** e `<n8n>/webhook/emitir-login` entre
+os URIs de redirecionamento autorizados. Ele só pede `openid email`: o fluxo
+recebe o e-mail de quem entrou, e nada mais da conta.
 Numa organização Google Workspace, o app OAuth pode ser do tipo **Interno**,
 dispensando a verificação do Google.

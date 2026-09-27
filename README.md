@@ -29,11 +29,12 @@ foi implementado de duas formas, porque o ambiente de quem emite os
 documentos define o que é possível rodar (por que, em
 [`docs/decisao.md`](docs/decisao.md)).
 
-| | [Python](python/) | [n8n](n8n/) (validação pronta, emissão em desenvolvimento) |
+| | [Python](python/) | [n8n](n8n/) (validação pronta, emissão em teste) |
 |---|---|---|
 | Stack | Flask, ReportLab, gspread, Docker | n8n, Google Sheets, Google Slides |
 | PDF | Desenhado em código, layout adaptativo | Modelo no Google Slides preenchido pelo fluxo |
 | Validação | Página própria com rate limit por IP | Página servida por webhook do n8n |
+| Emissão | Senha, lista da planilha, um PDF por vez | Login com a conta Google, cadastro por formulário ou CSV, PDF avulso ou vários num ZIP |
 | Acesso ao Google | Identidade do ambiente, sem chave | OAuth da conta do emissor, sem chave |
 | Quando usar | Onde dá para hospedar um contêiner | Onde não dá, ou a equipe já opera n8n |
 | Testes | 140 testes automatizados | Validação manual dos fluxos |
