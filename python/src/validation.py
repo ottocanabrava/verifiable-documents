@@ -48,13 +48,15 @@ def load_conteudos():
     return _read_sheet(os.environ["CONTEUDOS_SHEET_ID"])
 
 
-def conteudo_do_curso(rows, curso):
-    """[(semestre, item), ...] do curso, na ordem da planilha."""
+def conteudo_do_curso(rows, curso, semestre=None):
+    """[(semestre, item), ...] do curso (e, se dado, só desse semestre), na ordem da planilha."""
     key = str(curso).strip().casefold()
+    sem = str(semestre).strip().casefold() if semestre else None
     return [
         (str(r.get("semestre", "")).strip(), str(r["item"]).strip())
         for r in rows
         if str(r.get("curso", "")).strip().casefold() == key and str(r.get("item", "")).strip()
+        and (sem is None or str(r.get("semestre", "")).strip().casefold() == sem)
     ]
 
 

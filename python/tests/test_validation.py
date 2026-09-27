@@ -70,6 +70,11 @@ def test_conteudo_do_curso_filtra_e_mantem_ordem():
     assert conteudo_do_curso(CONTEUDO_ROWS, "Alemão") == []
 
 
+def test_conteudo_do_curso_de_um_semestre():
+    assert conteudo_do_curso(CONTEUDO_ROWS, "Inglês", " 3º SEMESTRE ") == [c for c in CONTEUDO if c[0] == "3º semestre"]
+    assert conteudo_do_curso(CONTEUDO_ROWS, "Inglês", "9º semestre") == []
+
+
 def test_status_diferente_de_ativo_nao_e_valido():
     assert public_view(find(RECORDS, "RevogadoXXXX"))["valido"] is False
 
@@ -225,6 +230,17 @@ def test_emitir_pdf_exige_senha(admin):
 
 def test_emitir_pdf_inexistente(admin):
     assert admin.get("/emitir/naoExiste123.pdf", headers=auth()).status_code == 404
+
+
+def test_emitir_certificado_de_semestre_com_conteudo(admin):
+    semestre = {**CERTIFICADO, "id": "Sem2xPz9aBcQ", "tipo_documento": "certificado_semestre",
+                "semestre_conteudo": "2º semestre"}
+    del semestre["conteudo"]
+    app_module.app.config["LOAD_RECORDS"] = lambda: RECORDS + [semestre]
+    r = admin.get("/emitir/Sem2xPz9aBcQ.pdf", headers=auth())
+    assert r.status_code == 200
+    page2 = " ".join(PdfReader(io.BytesIO(r.data)).pages[1].extract_text().split())
+    assert "no 2º semestre do curso de Inglês" in page2 and "3º semestre" not in page2
 
 
 def test_emitir_pdf_com_erro_na_planilha_mostra_motivo(admin):

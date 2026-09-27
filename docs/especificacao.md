@@ -8,7 +8,7 @@ regra aqui, as duas mudam juntas.
 Uma planilha do Google, uma linha por documento emitido:
 
 ```
-id | tipo_documento | nome | curso | carga_horaria | data_emissao | status | cpf | rg | endereco | dia_aula
+id | tipo_documento | nome | curso | carga_horaria | data_emissao | status | cpf | rg | endereco | dia_aula | semestre_conteudo
 ```
 
 - Colunas em **texto simples**, para a planilha não converter datas nem cortar
@@ -31,7 +31,7 @@ planilha, agrupados por `semestre`.
 | `tipo_documento` | Nome exibido | Obrigatórias | Opcionais |
 |---|---|---|---|
 | `certificado_curso` | Certificado de conclusão de curso | `nome`, `curso`, `carga_horaria` + conteúdo do curso | |
-| `certificado_semestre` | Certificado de conclusão de semestre | `nome`, `curso`, `carga_horaria` | |
+| `certificado_semestre` | Certificado de conclusão de semestre | `nome`, `curso`, `carga_horaria` | `semestre_conteudo` |
 | `certificado_trimestre` | Certificado de conclusão de trimestre | `nome`, `curso`, `carga_horaria` | |
 | `declaracao_matricula` | Declaração de matrícula | `nome`, `curso`, `cpf`, `rg`, `endereco` | `dia_aula`, `carga_horaria` |
 | `declaracao_termino_semestre` | Declaração de término de semestre | `nome`, `curso`, `cpf`, `rg`, `endereco` | `dia_aula`, `carga_horaria` |
@@ -39,6 +39,12 @@ planilha, agrupados por `semestre`.
 `id` e `data_emissao` são obrigatórios em todos. O certificado de curso
 completo tem uma segunda página com o conteúdo do curso; sem conteúdo
 cadastrado, ele não é gerado.
+
+O certificado de semestre tem uma página só. A pedido, ganha a mesma segunda
+página, só com o conteúdo de um semestre: basta preencher `semestre_conteudo`
+com o semestre, escrito como na coluna `semestre` da planilha de conteúdo
+(comparado sem diferenciar maiúsculas). Preenchido e sem conteúdo cadastrado
+para aquele curso e semestre, o certificado não é gerado.
 
 ## ID de validação
 

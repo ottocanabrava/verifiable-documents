@@ -91,6 +91,23 @@ def test_certificado_de_periodo_tem_uma_pagina():
     assert len(PdfReader(io.BytesIO(pdf)).pages) == 1
 
 
+def test_certificado_de_semestre_com_conteudo_a_pedido():
+    so_o_2 = [c for c in CONTEUDO if c[0] == "2º semestre"]
+    semestre = {**CERTIFICADO, "tipo_documento": "certificado_semestre", "semestre_conteudo": "2º semestre",
+                "conteudo": so_o_2}
+    reader = PdfReader(io.BytesIO(render(semestre, ISSUER)))
+    assert len(reader.pages) == 2
+    page2 = " ".join(reader.pages[1].extract_text().split())
+    assert "Conteúdos abordados no 2º semestre do curso de Inglês, com carga horária de 40 horas" in page2
+    assert "Tópico fictício 12 do 2º semestre" in page2 and "1º semestre" not in page2
+
+
+def test_certificado_de_semestre_pedido_sem_conteudo():
+    semestre = {**CERTIFICADO, "tipo_documento": "certificado_semestre", "semestre_conteudo": "9º semestre", "conteudo": []}
+    with pytest.raises(ValueError, match="semestre_conteudo"):
+        render(semestre, ISSUER)
+
+
 def test_certificado_curso_sem_conteudo():
     with pytest.raises(ValueError, match="conteudo"):
         render({**CERTIFICADO, "conteudo": []}, ISSUER)

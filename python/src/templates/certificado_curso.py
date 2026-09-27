@@ -167,8 +167,11 @@ def draw_conteudo(c, record, issuer):
     _centered(c, "CONTEÚDO PROGRAMÁTICO", "Montserrat-Bold", 11, height - 42, white, tracking=3)
     _centered(c, record["curso"].upper(), "Montserrat-ExtraBold", 24, height - 76, ACCENT, tracking=2)
 
+    semestre = record.get("semestre_conteudo")
     _centered(
         c,
+        f"Conteúdos abordados no {semestre} do curso de {record['curso']}, com carga horária de "
+        f"{record['carga_horaria']} horas." if semestre else
         f"Conteúdos abordados no curso de {record['curso']}, com carga horária total de "
         f"{record['carga_horaria']} horas.",
         "Montserrat-Regular", 10.5, height - strip - 30, TEXT, width - 120, 8,
