@@ -1,0 +1,79 @@
+{
+  "name": "Emitir documento: identidade visual",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "name": "Chamado pelo fluxo de emissão",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d39f84da-a1e2-449f-b2d3-8091a2b3c4d5",
+              "name": "emissor",
+              "type": "string",
+              "value": "Escola Exemplo de Idiomas"
+            },
+            {
+              "id": "e4a095eb-b2f3-45a0-83e4-91a2b3c4d5e6",
+              "name": "logo_url",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "id": "f5b1a6fc-c304-46b1-94f5-a2b3c4d5e6f7",
+              "name": "cor",
+              "type": "string",
+              "value": "#0f3d3e"
+            },
+            {
+              "id": "06c2b70d-d415-47c2-a506-b3c4d5e6f708",
+              "name": "css",
+              "type": "string",
+              "value": "* { box-sizing: border-box; }\nbody { margin: 0; font-family: system-ui, sans-serif; background: #f4f3f8; color: #1f1d2b; }\na { color: inherit; }\n.topo { background: #fff; border-bottom: 4px solid var(--cor); }\n.topo div { max-width: 880px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }\n.topo img { height: 56px; width: auto; margin: -8px 0; }\n.topo b { color: var(--cor); font-size: 1.05rem; }\n.topo small { margin-left: auto; color: #6b6880; font-size: .85rem; }\nmain { max-width: 880px; margin: 20px auto; padding: 0 16px; }\n.card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 16px; }\n.barra { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }\nh1 { margin: 0 0 4px; font-size: 1.15rem; }\n.btn { display: inline-block; padding: 10px 16px; border-radius: 8px; border: 0; background: var(--cor); color: #fff;\n       font: 600 .95rem system-ui, sans-serif; text-decoration: none; cursor: pointer; white-space: nowrap; }\n.btn.claro { background: #fff; color: var(--cor); border: 1px solid var(--cor); }\n.erro { color: #b3261e; background: #fdecea; border-radius: 8px; padding: 12px; margin-bottom: 16px; }\n.ok { color: #1d6b3f; background: #e6f4ea; border-radius: 8px; padding: 12px; margin-bottom: 16px;\n      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }\n.muted { color: #6b6880; font-size: .9rem; margin: 0 0 12px; }\n"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "name": "Identidade visual",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Chamado pelo fluxo de emissão": {
+      "main": [
+        [
+          {
+            "node": "Identidade visual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false,
+    "saveExecutionProgress": false
+  }
+}

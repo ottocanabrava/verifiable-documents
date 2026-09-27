@@ -13,10 +13,10 @@ próprio n8n.
 - `workflows/validar.json` e `workflows/validar-preparar.json`: página pública
   de validação (webhook), com o botão "Adicionar ao LinkedIn" nos certificados
   válidos. **Pronto.**
-- `workflows/emitir.json`, `workflows/emitir-autorizar.json` e
-  `workflows/emitir-tela.json`: área com login pela conta Google que lista os documentos da planilha e gera o PDF a partir do modelo
-  no Google Slides, entregue só ao emissor. Linha sem `id` ganha um ID novo,
-  gravado na planilha, na primeira emissão.
+- `workflows/emitir*.json`: área com login pela conta Google onde a equipe
+  cadastra documentos (formulário) e baixa o PDF gerado a partir do modelo no
+  Google Slides, entregue só a ela. Um fluxo principal e cinco subfluxos
+  (autorizar, identidade visual e uma tela cada: login, lista, formulário).
 
 ## Validação (`validar.json`)
 
@@ -84,14 +84,21 @@ um `X-Forwarded-For` forjado é ignorado).
 
 ## Emissão (`emitir.json`)
 
-Webhook (GET) → **Autorizar** (subfluxo `emitir-autorizar.json`: login com a
-conta Google) → **Gerar ID** (nó Crypto, bytes aleatórios seguros) →
-**Planilha de documentos** → **Preparar documento** → uma de três saídas:
+Webhook (GET e POST) → **Autorizar** (subfluxo `emitir-autorizar.json`: login
+com a conta Google) → **Gerar ID** (nó Crypto, bytes aleatórios seguros) →
+**Planilha de documentos** → **Preparar documento** → uma de quatro saídas:
 
-- sem parâmetro: página com os documentos da planilha e um botão "Baixar PDF"
-  em cada linha (`?id=` ou, para linha sem ID, `?linha=`);
+- sem parâmetro: lista dos documentos da planilha, com o nome legível do tipo,
+  a situação e um botão "Baixar PDF" em cada um (`?id=` ou, para linha sem ID,
+  `?linha=`), em cartões que cabem no celular;
+- `?novo`: formulário de cadastro. CPF, RG, endereço e dia de aula só aparecem
+  quando o tipo é declaração (CSS, sem script). O envio (POST no mesmo
+  endereço) passa pelas mesmas conferências da emissão, ganha um ID novo, é
+  gravado na planilha como texto puro (**Anotar na planilha**) e volta para a
+  lista com o botão de baixar o PDF do documento novo. Com erro, o formulário
+  volta preenchido e com o aviso;
 - problema na linha (tipo desconhecido, campo obrigatório vazio, data
-  inválida, ID duplicado): a mesma página, com o erro no topo;
+  inválida, ID duplicado): a lista, com o erro no topo;
 - tudo certo: grava o ID novo na planilha (se for o caso), copia o modelo no
   Drive, troca os marcadores e a caixa do QR (API do Slides), exporta o PDF,
   entrega ao emissor e apaga a cópia. Se falhar depois da cópia, a cópia também
@@ -99,13 +106,17 @@ conta Google) → **Gerar ID** (nó Crypto, bytes aleatórios seguros) →
 
 Login: sem sessão, o **Autorizar** mostra a tela com o botão "Fazer login com o
 Google" (padrão visual do Google, sem script: é um link), com um `state`
-aleatório guardado num cookie. O HTML da tela fica num terceiro subfluxo,
-`emitir-tela.json`, porque o WAF barrou salvá-lo junto com o nó Code. O Google volta em `/webhook/emitir-login`;
-o fluxo confere o `state`, troca o código pelo e-mail da conta (**Trocar
+aleatório guardado num cookie. O Google volta em `/webhook/emitir-login`; o
+fluxo confere o `state`, troca o código pelo e-mail da conta (**Trocar
 código** → **Conta Google**) e o subfluxo abre uma sessão de 8 horas (cookie
-`HttpOnly`, `Secure`) se o e-mail estiver em `PERMITIDOS`. A lista é conferida
+`HttpOnly`, `Secure`, `SameSite=Lax`, que também barra o envio do formulário a
+partir de outro site) se o e-mail estiver em `PERMITIDOS`. A lista é conferida
 de novo a cada acesso: tirar um e-mail corta o acesso na hora. Sessões e
 logins pendentes ficam nos dados estáticos do subfluxo.
+
+O **Preparar documento** só devolve dados, com os textos já escapados; o HTML
+fica nos subfluxos de tela, em expressões do nó Set, e a cor, o logo e o nome
+da escola no subfluxo de identidade visual.
 
 O `certificado_curso` ainda não é emitido por aqui: falta o modelo da página do
 conteúdo do curso.
@@ -120,18 +131,18 @@ Para usar, além dos passos da validação:
    Google Slides no projeto do cliente OAuth.
 3. No mesmo cliente OAuth do Google (tipo "Aplicativo da Web"), acrescente o
    URI de redirecionamento `<n8n>/webhook/emitir-login`.
-4. Importe `emitir-autorizar.json`, `emitir-tela.json` e depois `emitir.json`.
-   Nos nós **Autorizar (subfluxo)** e **Criar sessão (subfluxo)**, escolha
-   "Emitir documento: autorizar"; no **Montar tela (subfluxo)**, "Emitir
-   documento: tela de login"; nos dois nós de planilha,
-   a credencial do Google Sheets e a planilha; nos nós de requisição (Copiar,
-   Preencher, Baixar, Apagar), a credencial Google OAuth2 API.
+4. Importe os cinco subfluxos (`emitir-autorizar.json`, `emitir-identidade.json`
+   e os três `emitir-tela-*.json`) e depois `emitir.json`. Nos nós
+   **Autorizar (subfluxo)** e **Criar sessão (subfluxo)**, escolha "Emitir
+   documento: autorizar"; nos nós **Identidade**, **Tela de login**, **Lista**
+   e **Formulário (subfluxo)**, o subfluxo correspondente; nos três nós de
+   planilha, a credencial do Google Sheets e a planilha; nos nós de requisição
+   (Copiar, Preencher, Baixar, Apagar), a credencial Google OAuth2 API.
 5. No nó **Autorizar**, preencha `CLIENT_ID`, `CLIENT_SECRET`, `URL_EMISSAO` e
-   `PERMITIDOS` (e-mails ou `@dominio`); sem eles, a emissão responde 404. Na
-   tela de login, `EMISSOR`, `LOGO_URL` (opcional) e `COR`. No
-   topo do **Preparar documento**, `EMISSOR`, `URL_VALIDACAO` e os IDs dos dois
-   modelos.
-6. Publique os três fluxos, os subfluxos primeiro. O endereço da emissão é
+   `PERMITIDOS` (e-mails ou `@dominio`); sem eles, a emissão responde 404. No
+   subfluxo de identidade visual, `emissor`, `logo_url` (opcional) e `cor`. No
+   topo do **Preparar documento**, `URL_VALIDACAO` e os IDs dos dois modelos.
+6. Publique todos os fluxos, os subfluxos primeiro. O endereço da emissão é
    `<n8n>/webhook/emitir`.
 
 | Marcador | Certificado | Declaração |
@@ -140,14 +151,20 @@ Para usar, além dos passos da validação:
 | `{{nome}}`, `{{CURSO}}` (maiúsculas), `{{carga_horaria}}`, `{{conclusao}}` ("concluiu o semestre do curso de") | ✓ | |
 | `{{TITULO}}`, `{{abertura}}`, `{{NOME}}`, `{{cpf}}`, `{{rg}}`, `{{ENDERECO}}`, `{{situacao}}`, `{{curso_destaque}}`, `{{extras}}` (dia de aula e carga horária, se houver) | | ✓ |
 
-Os textos que mudam por tipo são os mesmos da versão Python. Nas expressões,
-os nós usam `$node["..."]` e não `$('...')`: o WAF citado acima também barrou o
-salvamento quando `$('...')` aparecia nas expressões junto com o nó Code.
+Os textos que mudam por tipo são os mesmos da versão Python.
 
-Testado num ambiente real: tela de login (cookie do `state` passando pelo
-proxy), volta do Google com `state` errado (tela de novo, com aviso) e com
-código falso (erro 502). Antes, ainda com senha no lugar do login Google: lista
-de documentos e falha no Slides (cópia apagada, erro 502 para o emissor).
+Por que tantos subfluxos: o WAF citado acima soma pontos pelo conteúdo do fluxo
+salvo. Barrou o nó Code junto com uma página HTML, duas telas HTML no mesmo
+fluxo e `$('...')` nas expressões junto com o nó Code (daí `$node["..."]`).
+Cada tela sozinha passa.
+
+Testado num ambiente real: lista, formulário (campo faltando, HTML no nome
+escapado, cadastro gravado na planilha, sem CPF por ser certificado, e volta
+para a lista com o documento novo), tela de login (cookie do `state` passando
+pelo proxy) e volta do Google com `state` errado (tela de novo, com aviso) ou
+código falso (erro 502). Antes, ainda com senha no lugar do login: falha no
+Slides (cópia apagada, erro 502 para o emissor). Falta o login de ponta a ponta
+e a geração do PDF, que dependem da configuração do Google.
 
 ## Conexão com o Google
 
