@@ -9,7 +9,9 @@ escaneia o QR e consulta, numa página pública, o registro correspondente: se
 ele existe, se está ativo ou revogado, e só tipo, nome, curso, carga horária e
 data. CPF, RG e endereço nunca aparecem.
 
-> Repositório de portfólio: apenas dados fictícios e nenhuma credencial.
+> Implementação técnica de um projeto real, feito para uma escola de idiomas.
+> Aqui só há dados fictícios e nenhuma credencial, para não identificar a
+> escola nem seus alunos.
 
 <p align="center">
   <img src="docs/imagens/certificado.png" width="760"
@@ -32,9 +34,15 @@ LinkedIn** já preenchido.
 
 ## Contexto
 
-Certificados e declarações são emitidos a partir de uma planilha e entregues aos
-alunos, incluindo os que estudam por meio de empresas clientes, que acompanham
-os documentos entregues aos seus funcionários
+O projeto foi desenvolvido para atender a uma necessidade de uma escola de
+idiomas: emitir certificados e declarações e permitir que quem os recebe confira
+se são válidos. Participei diretamente da construção da solução, feita para
+rodar no ambiente da própria escola; este repositório reúne a sua implementação
+técnica. Não é um produto nem um serviço oferecido.
+
+Os documentos são emitidos a partir de uma planilha e entregues aos alunos,
+incluindo os que estudam por meio de empresas clientes, que acompanham os
+documentos entregues aos seus funcionários
 ([contexto](docs/decisao.md#contexto)). Por isso cada documento tem um registro
 que qualquer pessoa confere pelo QR, na página do emissor, sem acesso aos dados
 internos.
