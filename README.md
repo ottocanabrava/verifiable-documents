@@ -62,7 +62,7 @@ especificação e nas duas implementações.
 
 ```
 planilha do Google (registro: uma linha por documento, com status)
-   ├── emissão (restrita ao emissor): gera o PDF com QR sob demanda
+   ├── página de emissão (restrita à equipe): gera o PDF com QR sob demanda
    └── validação pública (só leitura): ID do QR → tipo, nome, curso, carga horária, data e status
 ```
 
