@@ -139,13 +139,21 @@ O **Preparar documento** só devolve dados, com os textos já escapados; o HTML
 fica nos subfluxos de tela, em expressões do nó Set, e a cor, o logo e o nome
 da escola no subfluxo de identidade visual.
 
-O `certificado_curso` ainda não é emitido por aqui: falta o modelo da página do
-conteúdo do curso.
+O `certificado_curso` usa um modelo de duas páginas: a primeira igual à dos
+outros certificados e a segunda com o conteúdo programático, lido da aba de
+conteúdos (`curso | semestre | item`, como na
+[especificação](../docs/especificacao.md#fonte-dos-dados); pode ser uma aba da
+mesma planilha, escolhida no nó **Conteúdo dos cursos**). Os itens do curso
+(sem diferenciar maiúsculas) saem na ordem da aba, com o semestre em
+maiúsculas como título, em duas colunas. Sem conteúdo cadastrado, ou com
+conteúdo que não cabe na página (cerca de 26 linhas por coluna), o PDF não é
+gerado e a tela diz o porquê.
 
 Para usar, além dos passos da validação:
 
-1. Crie dois modelos no Google Slides, um de certificado (A4 paisagem) e um de
-   declaração (A4 retrato), com os marcadores abaixo escritos no texto. O QR
+1. Crie três modelos no Google Slides: certificado (A4 paisagem), certificado de
+   curso (o mesmo, com uma segunda página de conteúdo) e declaração (A4
+   retrato), com os marcadores abaixo escritos no texto. O QR
    entra no lugar de uma forma que contenha só `{{qr}}`.
 2. Crie uma credencial **Google OAuth2 API** com o escopo
    `https://www.googleapis.com/auth/drive`, e ative as APIs do Google Drive e do
@@ -157,13 +165,14 @@ Para usar, além dos passos da validação:
    **Autorizar (subfluxo)** e **Criar sessão (subfluxo)**, escolha "Emitir
    documento: autorizar"; nos nós **Identidade**, **Tela de login**, **Lista**,
    **Formulário**, **Importar CSV** e **Pacote ZIP (subfluxo)**, o subfluxo
-   correspondente; nos três nós de
-   planilha, a credencial do Google Sheets e a planilha; nos nós de requisição
+   correspondente; nos quatro nós de
+   planilha, a credencial do Google Sheets e a planilha (no **Conteúdo dos
+   cursos**, a aba de conteúdos); nos nós de requisição
    (Copiar, Preencher, Baixar, Apagar), a credencial Google OAuth2 API.
 5. No nó **Autorizar**, preencha `CLIENT_ID`, `CLIENT_SECRET`, `URL_EMISSAO` e
    `PERMITIDOS` (e-mails ou `@dominio`); sem eles, a emissão responde 404. No
    subfluxo de identidade visual, `emissor`, `logo_url` (opcional) e `cor`. No
-   topo do **Preparar documento**, `URL_VALIDACAO` e os IDs dos dois modelos.
+   topo do **Preparar documento**, `URL_VALIDACAO` e os IDs dos três modelos.
 6. Publique todos os fluxos, os subfluxos primeiro. O endereço da emissão é
    `<n8n>/webhook/emitir`.
 
@@ -171,6 +180,7 @@ Para usar, além dos passos da validação:
 |---|---|---|
 | `{{id}}`, `{{data}}` (por extenso) | ✓ | ✓ |
 | `{{nome}}`, `{{CURSO}}` (maiúsculas), `{{carga_horaria}}`, `{{conclusao}}` ("concluiu o semestre do curso de") | ✓ | |
+| 2ª página do certificado de curso: `{{CURSO}}`, `{{curso}}`, `{{carga_horaria}}`, `{{conteudo_1}}` e `{{conteudo_2}}` (uma caixa por coluna), `{{nome}}`, `{{id}}` | ✓ | |
 | `{{TITULO}}`, `{{abertura}}`, `{{NOME}}`, `{{cpf}}`, `{{rg}}`, `{{ENDERECO}}`, `{{situacao}}`, `{{curso_destaque}}`, `{{extras}}` (dia de aula e carga horária, se houver) | | ✓ |
 
 Os textos que mudam por tipo são os mesmos da versão Python.
