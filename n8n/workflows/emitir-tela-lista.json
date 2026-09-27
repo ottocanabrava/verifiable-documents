@@ -1,0 +1,61 @@
+{
+  "name": "Emitir documento: lista",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "name": "Chamado pelo fluxo de emissão",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4a06fb41-1859-4b06-a94a-f708192a3b4c",
+              "name": "html",
+              "type": "string",
+              "value": "=<!doctype html>\n<html lang=\"pt-BR\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Emissão de documentos</title>\n<style>:root { --cor: {{ $json.cor }}; } {{ $json.css }}\n.doc { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #ebe9f2; }\n.doc > div { flex: 1; min-width: 0; }\n.doc strong { display: block; }\n.doc span { color: #6b6880; font-size: .88rem; }\n.selo { font-size: .75rem; font-weight: 600; padding: 2px 8px; border-radius: 99px; margin-left: 6px; }\n.selo.ativo { background: #e6f4ea; color: #1d6b3f; } .selo.outro { background: #fdecea; color: #b3261e; }\n.aviso { color: #b3261e; font-size: .85rem; }\n@media (max-width: 560px) { .doc { flex-wrap: wrap; } .doc .btn, .doc .aviso { width: 100%; text-align: center; } }\n</style>\n</head>\n<body>\n<header class=\"topo\"><div>{{ $json.logo_url ? '<img src=\"' + $json.logo_url + '\" alt=\"\">' : '' }}<b>Emissão de documentos</b><small>{{ $json.email }}</small></div></header>\n<main>\n{{ $json.erro ? '<div class=\"erro\"><strong>Não foi possível gerar o PDF.</strong> ' + $json.erro + '</div>' : '' }}\n{{ $json.criado ? '<div class=\"ok\"><span><strong>Documento cadastrado:</strong> ' + $json.criado.nome + '</span><a class=\"btn\" href=\"' + $json.criado.href + '\">Baixar PDF</a></div>' : '' }}\n<div class=\"card\">\n  <div class=\"barra\"><h1>Documentos ({{ $json.docs.length }})</h1><a class=\"btn\" href=\"?novo\">+ Novo documento</a></div>\n  <p class=\"muted\">Os mais recentes primeiro. O PDF é gerado na hora, a partir da planilha.</p>\n  {{ $json.docs.map(d => `<div class=\"doc\"><div><strong>${d.nome}</strong><span>${[d.tipo, d.curso, d.data].filter(Boolean).join(' · ')}</span><span class=\"selo ${d.ativo ? 'ativo' : 'outro'}\">${d.status}</span></div>${d.problema ? `<span class=\"aviso\">${d.problema}</span>` : `<a class=\"btn\" href=\"${d.href}\">Baixar PDF</a>`}</div>`).join('') }}\n</div>\n</main>\n</body>\n</html>\n"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "name": "Montar lista",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Chamado pelo fluxo de emissão": {
+      "main": [
+        [
+          {
+            "node": "Montar lista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false,
+    "saveExecutionProgress": false
+  }
+}

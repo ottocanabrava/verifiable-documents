@@ -19,6 +19,22 @@
     },
     {
       "parameters": {
+        "httpMethod": "POST",
+        "path": "emitir",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Cadastro",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -200
+      ],
+      "webhookId": "emitir-cadastro"
+    },
+    {
+      "parameters": {
         "httpMethod": "GET",
         "path": "emitir-login",
         "responseMode": "responseNode",
@@ -276,8 +292,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        880,
-        640
+        2200,
+        440
       ]
     },
     {
@@ -285,16 +301,155 @@
         "workflowId": {
           "__rl": true,
           "mode": "id",
-          "value": "COLE_AQUI_O_ID_DO_SUBFLUXO_DA_TELA"
+          "value": "COLE_AQUI_O_ID_DO_SUBFLUXO_DA_IDENTIDADE"
         },
         "options": {}
       },
-      "name": "Montar tela (subfluxo)",
+      "name": "Identidade (subfluxo)",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        660,
-        640
+        1540,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "17d3c81e-e526-48d3-b617-c4d5e6f70819",
+                    "leftValue": "={{ $json.tela }}",
+                    "rightValue": "login",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "login"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "28e4d92f-f637-49e4-8728-d5e6f708192a",
+                    "leftValue": "={{ $json.tela }}",
+                    "rightValue": "lista",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "lista"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "39f5ea30-0748-4af5-9839-e6f708192a3b",
+                    "leftValue": "={{ $json.tela }}",
+                    "rightValue": "formulario",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "formulario"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Qual tela",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1760,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "COLE_AQUI_O_ID_DO_SUBFLUXO_DA_TELA_DE_LOGIN"
+        },
+        "options": {}
+      },
+      "name": "Tela de login (subfluxo)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1980,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "COLE_AQUI_O_ID_DO_SUBFLUXO_DA_LISTA"
+        },
+        "options": {}
+      },
+      "name": "Lista (subfluxo)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1980,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "COLE_AQUI_O_ID_DO_SUBFLUXO_DO_FORMULARIO"
+        },
+        "options": {}
+      },
+      "name": "Formulário (subfluxo)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1980,
+        600
       ]
     },
     {
@@ -466,7 +621,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// ===== Configuração (preencha no seu n8n; nunca no repositório) =====\nconst EMISSOR = 'Escola Exemplo de Idiomas';\nconst URL_VALIDACAO = 'https://exemplo.com/webhook/validar';  // endereço público da validação\nconst MODELO_CERTIFICADO = '';  // ID do modelo no Google Slides\nconst MODELO_DECLARACAO = '';\n// ponytail: o QR é desenhado por um serviço externo, que vê a URL de validação\n// (só o ID, nenhum dado do aluno). Se precisar evitar, trocar por um gerador próprio.\nconst QR_API = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=0&data=';\n// ====================================================================\n\nconst TIPOS = {\n  certificado_curso: 'Certificado de conclusão de curso',\n  certificado_semestre: 'Certificado de conclusão de semestre',\n  certificado_trimestre: 'Certificado de conclusão de trimestre',\n  declaracao_matricula: 'Declaração de matrícula',\n  declaracao_termino_semestre: 'Declaração de término de semestre',\n};\nconst OBRIGATORIOS = {\n  certificado_semestre: ['nome', 'curso', 'carga_horaria'],\n  certificado_trimestre: ['nome', 'curso', 'carga_horaria'],\n  declaracao_matricula: ['nome', 'curso', 'cpf', 'rg', 'endereco'],\n  declaracao_termino_semestre: ['nome', 'curso', 'cpf', 'rg', 'endereco'],\n};\nconst MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho',\n  'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];\n\nconst esc = v => String(v ?? '').replace(/[&<>\"']/g, c =>\n  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' })[c]);\nconst txt = v => String(v ?? '').trim();\nconst ID = /^[A-Za-z0-9]{12}$/;\n\nfunction extenso(valor) {  // 'AAAA-MM-DD' ou 'DD/MM/AAAA' -> '24 de setembro de 2026', ou ''\n  let m = txt(valor).match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);\n  const [a, me, d] = m ? [+m[1], +m[2], +m[3]]\n    : (m = txt(valor).match(/^(\\d{2})\\/(\\d{2})\\/(\\d{4})$/)) ? [+m[3], +m[2], +m[1]] : [];\n  const dt = new Date(Date.UTC(a, me - 1, d));\n  if (!m || dt.getUTCMonth() !== me - 1 || dt.getUTCDate() !== d) return '';\n  return `${d} de ${MESES[me - 1]} de ${a}`;\n}\n\nconst q = $('Webhook').first().json.query || {};\nconst email = $('Autorizar (subfluxo)').first().json.email;\nconst novoId = txt($('Gerar ID').first().json.novo_id).replace(/[^A-Za-z0-9]/g, '').slice(0, 12);\nconst entrada = $input.all().map(i => i.json);\nconst linhas = entrada.filter(r => r.row_number);\nconst contagem = {};\nfor (const r of linhas) contagem[txt(r.id)] = (contagem[txt(r.id)] || 0) + 1;\n\nfunction problema(r) {\n  if (!txt(r.id)) return '';\n  if (!ID.test(txt(r.id))) return 'ID inválido';\n  return contagem[txt(r.id)] > 1 ? 'ID duplicado' : '';\n}\n\nfunction pagina(status, erro) {\n  const docs = linhas.slice().reverse().map(r => {\n    const p = problema(r);\n    const acao = p ? `<span class=\"bad\">${esc(p)}</span>`\n      : `<a class=\"btn\" href=\"?${txt(r.id) ? 'id=' + encodeURIComponent(txt(r.id)) : 'linha=' + r.row_number}\">Baixar PDF</a>`;\n    return `<tr><td>${esc(r.nome)}</td><td>${esc(r.tipo_documento)}</td><td>${esc(r.curso)}</td>\n      <td>${esc(r.data_emissao)}</td><td>${esc(r.status)}</td><td>${acao}</td></tr>`;\n  }).join('\\n');\n  const html = `<!doctype html>\n<html lang=\"pt-BR\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Emissão de documentos</title>\n<style>\n  body { margin: 0; font-family: system-ui, sans-serif; background: #f2f5f5; color: #1f2a2b; }\n  header { background: #0f3d3e; color: #fff; padding: 20px 16px; }\n  header h1 { margin: 0; font-size: 1.1rem; letter-spacing: .04em; }\n  header p { margin: 4px 0 0; opacity: .75; font-size: .85rem; }\n  main { max-width: 960px; margin: 20px auto; padding: 0 16px; }\n  .card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 16px; }\n  h2 { font-size: 1rem; margin: 0 0 8px; }\n  .muted { color: #5f6f70; font-size: .9rem; }\n  .table { overflow-x: auto; }\n  table { width: 100%; border-collapse: collapse; font-size: .9rem; }\n  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #e1e9e9; white-space: nowrap; }\n  a.btn { display: inline-block; padding: 6px 12px; border-radius: 6px; background: #0e7c7b; color: #fff; text-decoration: none; }\n  .bad { color: #b3261e; }\n</style>\n</head>\n<body>\n<header><h1>EMISSÃO DE DOCUMENTOS${EMISSOR ? ' · ' + esc(EMISSOR) : ''}</h1><p>${esc(email)}</p></header>\n<main>\n  ${erro ? `<div class=\"card\"><p class=\"bad\"><strong>Não foi possível gerar o PDF:</strong> ${esc(erro)}</p>\n  <p class=\"muted\">Corrija o problema e tente de novo.</p></div>` : ''}\n  <div class=\"card\">\n    <h2>Documentos da planilha (${linhas.length})</h2>\n    <p class=\"muted\">Os mais recentes primeiro. Linha sem ID ganha um ID novo, gravado na planilha, ao baixar o PDF.\n    Para achar um aluno, use a busca do navegador.</p>\n    <div class=\"table\"><table>\n      <tr><th>Nome</th><th>Documento</th><th>Curso</th><th>Emissão</th><th>Status</th><th></th></tr>\n      ${docs}\n    </table></div>\n  </div>\n</main>\n</body>\n</html>`;\n  return [{ json: { acao: 'pagina', status, html } }];\n}\n\nif (entrada.some(r => r.error)) {  // falha ao ler a planilha: detalhe só no n8n\n  return [{ json: { acao: 'pagina', status: 503, html: '<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\">'\n    + '<title>Indisponível</title></head><body><h1>Serviço temporariamente indisponível</h1>'\n    + '<p>Tente de novo em alguns minutos.</p></body></html>' } }];\n}\nif (!q.id && !q.linha) return pagina(200);\n\n// Linha escolhida: pelo ID (tem de ser único) ou pelo número da linha (sem ID ainda).\nlet r;\nif (q.id) {\n  const achadas = linhas.filter(l => txt(l.id) === txt(q.id));\n  if (achadas.length !== 1) return pagina(404, achadas.length ? 'ID duplicado na planilha.' : 'documento não encontrado.');\n  r = achadas[0];\n} else {\n  r = linhas.find(l => String(l.row_number) === txt(q.linha));\n  if (!r) return pagina(404, 'linha não encontrada.');\n}\nconst erro = m => pagina(422, `${txt(r.nome) || 'linha ' + r.row_number}: ${m}`);\n\nlet id = txt(r.id);\nconst idNovo = !id;\nif (idNovo) {\n  if (!ID.test(novoId) || contagem[novoId]) return erro('falha ao gerar o ID; tente de novo.');\n  id = novoId;\n} else if (problema(r)) {\n  return erro(problema(r));\n}\n\nconst tipo = txt(r.tipo_documento);\nif (tipo === 'certificado_curso') {\n  // ponytail: a página do conteúdo do curso ainda não tem modelo no Slides.\n  return erro('o certificado de curso completo ainda não é emitido por aqui.');\n}\nif (!OBRIGATORIOS[tipo]) return erro(`tipo_documento desconhecido: \"${tipo}\".`);\nconst faltando = ['data_emissao', ...OBRIGATORIOS[tipo]].filter(k => !txt(r[k]));\nif (faltando.length) return erro(`campos obrigatórios ausentes: ${faltando.join(', ')}.`);\nconst data = extenso(r.data_emissao);\nif (!data) return erro(`data_emissao inválida: \"${txt(r.data_emissao)}\".`);\nconst modelo = tipo.startsWith('certificado_') ? MODELO_CERTIFICADO : MODELO_DECLARACAO;\nif (!modelo || !URL_VALIDACAO) return erro('modelo ou URL de validação não configurados no n8n.');\n\nconst curso = txt(r.curso);\nconst extras = [\n  txt(r.dia_aula) && `com aulas semanais (${txt(r.dia_aula)})`,\n  txt(r.carga_horaria) && `com carga horária de ${txt(r.carga_horaria)} horas`,\n].filter(Boolean);\nconst textos = tipo.startsWith('certificado_') ? {\n  nome: txt(r.nome),\n  conclusao: tipo === 'certificado_semestre' ? 'concluiu o semestre do curso de' : 'concluiu o trimestre do curso de',\n  CURSO: curso.toUpperCase(),\n  carga_horaria: txt(r.carga_horaria),\n} : {\n  TITULO: tipo === 'declaracao_matricula' ? 'DECLARAÇÃO DE MATRÍCULA' : 'DECLARAÇÃO DE TÉRMINO DE SEMESTRE',\n  abertura: tipo === 'declaracao_matricula' ? 'declara, para os fins que sejam necessários, que' : 'declara que o semestre de',\n  NOME: txt(r.nome).toUpperCase(),\n  cpf: txt(r.cpf),\n  rg: txt(r.rg),\n  ENDERECO: txt(r.endereco).toUpperCase(),\n  situacao: tipo === 'declaracao_matricula' ? 'está devidamente matriculado(a) no' : 'foi concluído no',\n  curso_destaque: tipo === 'declaracao_matricula' ? `curso de ${curso}` : `CURSO DE ${curso.toUpperCase()}`,\n  extras: extras.length ? ', ' + extras.join(' e ') : '',\n};\ntextos.data = data;\ntextos.id = id;\n\n// Pedidos para a API do Slides: troca cada {{marcador}} e a caixa {{qr}} pela imagem.\nconst requests = Object.entries(textos).map(([k, v]) => ({\n  replaceAllText: { containsText: { text: `{{${k}}}`, matchCase: true }, replaceText: v },\n}));\nrequests.push({ replaceAllShapesWithImage: {\n  containsText: { text: '{{qr}}', matchCase: true },\n  imageUrl: QR_API + encodeURIComponent(`${URL_VALIDACAO}?id=${id}`),\n  imageReplaceMethod: 'CENTER_INSIDE',\n} });\n\n// Nome do arquivo para o Content-Disposition: sem controles, aspas nem barras.\nconst arquivo = `${TIPOS[tipo]} - ${txt(r.nome)}`.replace(/[\\u0000-\\u001f\\u007f-\\u009f​-‏‪-‮⁦-⁩/\\\\\"]/g, '')\n  .replace(/\\s+/g, ' ').trim() + '.pdf';\nconst ascii = arquivo.normalize('NFD').replace(/[^\\x20-\\x7e]/g, '');\nconst disposicao = `attachment; filename=\"${ascii}\"; filename*=UTF-8''${encodeURIComponent(arquivo)\n  .replace(/['()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase())}`;\n\nreturn [{ json: { acao: 'pdf', row_number: r.row_number, id, id_novo: idNovo, modelo, copia: `Emissão ${id}`,\n  arquivo, disposicao, requests } }];\n"
+        "jsCode": "// ===== Configuração (preencha no seu n8n; nunca no repositório) =====\nconst URL_VALIDACAO = 'https://exemplo.com/webhook/validar';  // endereço público da validação\nconst MODELO_CERTIFICADO = '';  // ID do modelo no Google Slides\nconst MODELO_DECLARACAO = '';\n// ponytail: o QR é desenhado por um serviço externo, que vê a URL de validação\n// (só o ID, nenhum dado do aluno). Se precisar evitar, trocar por um gerador próprio.\nconst QR_API = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=0&data=';\n// ====================================================================\n\n// Decide o que fazer com o pedido e devolve só dados; o HTML das telas fica no\n// subfluxo \"Emitir documento: telas\" (valores de texto já escapados aqui).\nconst TIPOS = {\n  certificado_curso: 'Certificado de conclusão de curso',\n  certificado_semestre: 'Certificado de conclusão de semestre',\n  certificado_trimestre: 'Certificado de conclusão de trimestre',\n  declaracao_matricula: 'Declaração de matrícula',\n  declaracao_termino_semestre: 'Declaração de término de semestre',\n};\nconst OBRIGATORIOS = {\n  certificado_semestre: ['nome', 'curso', 'carga_horaria'],\n  certificado_trimestre: ['nome', 'curso', 'carga_horaria'],\n  declaracao_matricula: ['nome', 'curso', 'cpf', 'rg', 'endereco'],\n  declaracao_termino_semestre: ['nome', 'curso', 'cpf', 'rg', 'endereco'],\n};\nconst CAMPOS = { nome: 'nome', curso: 'curso', carga_horaria: 'carga horária', data_emissao: 'data de emissão',\n  cpf: 'CPF', rg: 'RG', endereco: 'endereço', dia_aula: 'dia de aula' };\nconst MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho',\n  'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];\n\nconst esc = v => String(v ?? '').replace(/[&<>\"']/g, c =>\n  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' })[c]);\nconst txt = v => String(v ?? '').trim();\nconst ID = /^[A-Za-z0-9]{12}$/;\n\nfunction data(valor) {  // 'AAAA-MM-DD' ou 'DD/MM/AAAA' -> {d, m, a}, ou null\n  let x = txt(valor).match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);\n  const [a, m, d] = x ? [+x[1], +x[2], +x[3]]\n    : (x = txt(valor).match(/^(\\d{2})\\/(\\d{2})\\/(\\d{4})$/)) ? [+x[3], +x[2], +x[1]] : [];\n  const dt = new Date(Date.UTC(a, m - 1, d));\n  return x && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d ? { d, m, a } : null;\n}\nconst dois = n => String(n).padStart(2, '0');\n\nconst pedido = $('Autorizar (subfluxo)').first().json;\nconst q = pedido.query || {};\nconst corpo = pedido.body || {};\nconst novoId = txt($('Gerar ID').first().json.novo_id).replace(/[^A-Za-z0-9]/g, '').slice(0, 12);\nconst entrada = $input.all().map(i => i.json);\nconst linhas = entrada.filter(r => r.row_number);\nconst contagem = {};\nfor (const r of linhas) contagem[txt(r.id)] = (contagem[txt(r.id)] || 0) + 1;\n\nfunction problema(r) {\n  if (!txt(r.id)) return '';\n  if (!ID.test(txt(r.id))) return 'ID inválido';\n  return contagem[txt(r.id)] > 1 ? 'ID duplicado' : '';\n}\nconst base = { acao: 'pagina', email: esc(pedido.email) };\n\nfunction lista(status, erro, criado) {\n  const docs = linhas.slice().reverse().map(r => ({\n    nome: esc(r.nome), tipo: esc(TIPOS[txt(r.tipo_documento)] || r.tipo_documento), curso: esc(r.curso),\n    data: esc(r.data_emissao), status: esc(r.status), ativo: txt(r.status).toLowerCase() === 'ativo',\n    problema: esc(problema(r)),\n    href: esc('?' + (txt(r.id) ? 'id=' + encodeURIComponent(txt(r.id)) : 'linha=' + r.row_number)),\n  }));\n  const novo = criado && linhas.find(r => txt(r.id) === criado);\n  return [{ json: { ...base, tela: 'lista', status, erro: esc(erro), docs,\n    criado: novo ? { nome: esc(novo.nome), href: esc('?id=' + encodeURIComponent(criado)) } : null } }];\n}\n\n// Hoje em Brasília (UTC-3, sem horário de verão desde 2019), para a data padrão do formulário.\nconst hoje = new Date(Date.now() - 3 * 3600000).toISOString().slice(0, 10);\nfunction formulario(status, erro, valores) {\n  const tipos = Object.keys(OBRIGATORIOS).map(v => ({ valor: v, nome: TIPOS[v] }));\n  const val = {};\n  for (const k of ['tipo_documento', ...Object.keys(CAMPOS)]) val[k] = esc(valores[k]);\n  return [{ json: { ...base, tela: 'formulario', status, erro: esc(erro), tipos, valores: val } }];\n}\n\nif (entrada.some(r => r.error)) return lista(503, 'Não foi possível ler a planilha agora. Tente de novo em alguns minutos.');\n\n// Cadastro de um documento novo (formulário): grava a linha com ID novo e volta para a lista.\nif (corpo.tipo_documento !== undefined) {\n  const v = {};\n  for (const k of ['tipo_documento', ...Object.keys(CAMPOS)]) v[k] = txt(corpo[k]).slice(0, 200);\n  const falha = m => formulario(422, m, v);\n  const tipo = v.tipo_documento;\n  if (!OBRIGATORIOS[tipo]) return falha('Escolha o tipo de documento.');\n  const faltando = ['data_emissao', ...OBRIGATORIOS[tipo]].filter(k => !v[k]);\n  if (faltando.length) return falha(`Preencha: ${faltando.map(k => CAMPOS[k]).join(', ')}.`);\n  const d = data(v.data_emissao);\n  if (!d) return falha('Data de emissão inválida.');\n  if (v.carga_horaria && !/^\\d{1,4}$/.test(v.carga_horaria)) return falha('Carga horária: só números (horas).');\n  if (!ID.test(novoId) || contagem[novoId]) return falha('Falha ao gerar o ID. Tente de novo.');\n  const declaracao = tipo.startsWith('declaracao_');\n  const linha = { id: novoId, tipo_documento: tipo, nome: v.nome, curso: v.curso, carga_horaria: v.carga_horaria,\n    data_emissao: `${dois(d.d)}/${dois(d.m)}/${d.a}`, status: 'ativo',\n    cpf: declaracao ? v.cpf : '', rg: declaracao ? v.rg : '', endereco: declaracao ? v.endereco : '',\n    dia_aula: declaracao ? v.dia_aula : '' };\n  return [{ json: { acao: 'cadastrar', linha, location: '?criado=' + novoId } }];\n}\n\nif (q.novo !== undefined) return formulario(200, '', { data_emissao: hoje });\nif (!q.id && !q.linha) return lista(200, '', txt(q.criado));\n\n// Linha escolhida: pelo ID (tem de ser único) ou pelo número da linha (sem ID ainda).\nlet r;\nif (q.id) {\n  const achadas = linhas.filter(l => txt(l.id) === txt(q.id));\n  if (achadas.length !== 1) return lista(404, achadas.length ? 'ID duplicado na planilha.' : 'Documento não encontrado.');\n  r = achadas[0];\n} else {\n  r = linhas.find(l => String(l.row_number) === txt(q.linha));\n  if (!r) return lista(404, 'Linha não encontrada.');\n}\nconst erro = m => lista(422, `${txt(r.nome) || 'Linha ' + r.row_number}: ${m}`);\n\nlet id = txt(r.id);\nconst idNovo = !id;\nif (idNovo) {\n  if (!ID.test(novoId) || contagem[novoId]) return erro('falha ao gerar o ID; tente de novo.');\n  id = novoId;\n} else if (problema(r)) {\n  return erro(problema(r));\n}\n\nconst tipo = txt(r.tipo_documento);\nif (tipo === 'certificado_curso') {\n  // ponytail: a página do conteúdo do curso ainda não tem modelo no Slides.\n  return erro('o certificado de curso completo ainda não é emitido por aqui.');\n}\nif (!OBRIGATORIOS[tipo]) return erro(`tipo de documento desconhecido: \"${tipo}\".`);\nconst faltando = ['data_emissao', ...OBRIGATORIOS[tipo]].filter(k => !txt(r[k]));\nif (faltando.length) return erro(`falta preencher na planilha: ${faltando.map(k => CAMPOS[k]).join(', ')}.`);\nconst d = data(r.data_emissao);\nif (!d) return erro(`data de emissão inválida: \"${txt(r.data_emissao)}\".`);\nconst modelo = tipo.startsWith('certificado_') ? MODELO_CERTIFICADO : MODELO_DECLARACAO;\nif (!modelo || !URL_VALIDACAO) return erro('modelo ou URL de validação não configurados no n8n.');\n\nconst curso = txt(r.curso);\nconst extras = [\n  txt(r.dia_aula) && `com aulas semanais (${txt(r.dia_aula)})`,\n  txt(r.carga_horaria) && `com carga horária de ${txt(r.carga_horaria)} horas`,\n].filter(Boolean);\nconst textos = tipo.startsWith('certificado_') ? {\n  nome: txt(r.nome),\n  conclusao: tipo === 'certificado_semestre' ? 'concluiu o semestre do curso de' : 'concluiu o trimestre do curso de',\n  CURSO: curso.toUpperCase(),\n  carga_horaria: txt(r.carga_horaria),\n} : {\n  TITULO: tipo === 'declaracao_matricula' ? 'DECLARAÇÃO DE MATRÍCULA' : 'DECLARAÇÃO DE TÉRMINO DE SEMESTRE',\n  abertura: tipo === 'declaracao_matricula' ? 'declara, para os fins que sejam necessários, que' : 'declara que o semestre de',\n  NOME: txt(r.nome).toUpperCase(),\n  cpf: txt(r.cpf),\n  rg: txt(r.rg),\n  ENDERECO: txt(r.endereco).toUpperCase(),\n  situacao: tipo === 'declaracao_matricula' ? 'está devidamente matriculado(a) no' : 'foi concluído no',\n  curso_destaque: tipo === 'declaracao_matricula' ? `curso de ${curso}` : `CURSO DE ${curso.toUpperCase()}`,\n  extras: extras.length ? ', ' + extras.join(' e ') : '',\n};\ntextos.data = `${d.d} de ${MESES[d.m - 1]} de ${d.a}`;\ntextos.id = id;\n\n// Pedidos para a API do Slides: troca cada {{marcador}} e a caixa {{qr}} pela imagem.\nconst requests = Object.entries(textos).map(([k, v]) => ({\n  replaceAllText: { containsText: { text: `{{${k}}}`, matchCase: true }, replaceText: v },\n}));\nrequests.push({ replaceAllShapesWithImage: {\n  containsText: { text: '{{qr}}', matchCase: true },\n  imageUrl: QR_API + encodeURIComponent(`${URL_VALIDACAO}?id=${id}`),\n  imageReplaceMethod: 'CENTER_INSIDE',\n} });\n\n// Nome do arquivo para o Content-Disposition: sem controles, invisíveis, aspas nem barras.\nconst arquivo = `${TIPOS[tipo]} - ${txt(r.nome)}`\n  .replace(/[\\u0000-\\u001f\\u007f-\\u009f​-‏‪-‮⁦-⁩/\\\\\"]/g, '')\n  .replace(/\\s+/g, ' ').trim() + '.pdf';\nconst ascii = arquivo.normalize('NFD').replace(/[^\\x20-\\x7e]/g, '');\nconst disposicao = `attachment; filename=\"${ascii}\"; filename*=UTF-8''${encodeURIComponent(arquivo)\n  .replace(/['()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase())}`;\n\nreturn [{ json: { acao: 'pdf', row_number: r.row_number, id, id_novo: idNovo, modelo, copia: `Emissão ${id}`,\n  arquivo, disposicao, requests } }];\n"
       },
       "name": "Preparar documento",
       "type": "n8n-nodes-base.code",
@@ -478,31 +633,66 @@
     },
     {
       "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
+        "rules": {
+          "values": [
             {
-              "id": "6c2f1d63-3a7b-4d2f-8b64-1f2a3b4c5d6e",
-              "leftValue": "={{ $json.acao }}",
-              "rightValue": "pdf",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6c2f1d63-3a7b-4d2f-8b64-1f2a3b4c5d6e",
+                    "leftValue": "={{ $json.acao }}",
+                    "rightValue": "pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pdf"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "4ae6ab63-1859-4c06-b94a-192a3b4c5d6e",
+                    "leftValue": "={{ $json.acao }}",
+                    "rightValue": "cadastrar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "cadastrar"
             }
-          ],
-          "combinator": "and"
+          ]
         },
-        "options": {}
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "pagina"
+        }
       },
-      "name": "Gerar PDF?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
+      "name": "O que fazer",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
       "position": [
         1320,
         -80
@@ -540,7 +730,190 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
+        2200,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "COLE_AQUI_O_ID_DA_PLANILHA"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultName": "Página1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.linha.id }}",
+            "tipo_documento": "={{ $json.linha.tipo_documento }}",
+            "nome": "={{ $json.linha.nome }}",
+            "curso": "={{ $json.linha.curso }}",
+            "carga_horaria": "={{ $json.linha.carga_horaria }}",
+            "data_emissao": "={{ $json.linha.data_emissao }}",
+            "status": "={{ $json.linha.status }}",
+            "cpf": "={{ $json.linha.cpf }}",
+            "rg": "={{ $json.linha.rg }}",
+            "endereco": "={{ $json.linha.endereco }}",
+            "dia_aula": "={{ $json.linha.dia_aula }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tipo_documento",
+              "displayName": "tipo_documento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nome",
+              "displayName": "nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "curso",
+              "displayName": "curso",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "carga_horaria",
+              "displayName": "carga_horaria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data_emissao",
+              "displayName": "data_emissao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "cpf",
+              "displayName": "cpf",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "rg",
+              "displayName": "rg",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "endereco",
+              "displayName": "endereco",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "dia_aula",
+              "displayName": "dia_aula",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "name": "Anotar na planilha",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
         1540,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 303,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Location",
+                "value": "={{ $node[\"Preparar documento\"].json.location }}"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              },
+              {
+                "name": "Referrer-Policy",
+                "value": "no-referrer"
+              },
+              {
+                "name": "X-Content-Type-Options",
+                "value": "nosniff"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Voltar para a lista",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1760,
         80
       ]
     },
@@ -823,6 +1196,17 @@
         ]
       ]
     },
+    "Cadastro": {
+      "main": [
+        [
+          {
+            "node": "Autorizar (subfluxo)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Volta do Google": {
       "main": [
         [
@@ -870,7 +1254,7 @@
         ],
         [
           {
-            "node": "Montar tela (subfluxo)",
+            "node": "Identidade (subfluxo)",
             "type": "main",
             "index": 0
           }
@@ -878,17 +1262,6 @@
         [
           {
             "node": "Negar",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Montar tela (subfluxo)": {
-      "main": [
-        [
-          {
-            "node": "Tela de login",
             "type": "main",
             "index": 0
           }
@@ -975,14 +1348,14 @@
       "main": [
         [
           {
-            "node": "Gerar PDF?",
+            "node": "O que fazer",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Gerar PDF?": {
+    "O que fazer": {
       "main": [
         [
           {
@@ -991,6 +1364,93 @@
             "index": 0
           }
         ],
+        [
+          {
+            "node": "Anotar na planilha",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Identidade (subfluxo)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anotar na planilha": {
+      "main": [
+        [
+          {
+            "node": "Voltar para a lista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Identidade (subfluxo)": {
+      "main": [
+        [
+          {
+            "node": "Qual tela",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qual tela": {
+      "main": [
+        [
+          {
+            "node": "Tela de login (subfluxo)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Lista (subfluxo)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Formulário (subfluxo)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tela de login (subfluxo)": {
+      "main": [
+        [
+          {
+            "node": "Tela de login",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lista (subfluxo)": {
+      "main": [
+        [
+          {
+            "node": "Responder página",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formulário (subfluxo)": {
+      "main": [
         [
           {
             "node": "Responder página",
