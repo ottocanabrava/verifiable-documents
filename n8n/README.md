@@ -101,11 +101,13 @@ com a conta Google) → **Gerar ID** (nó Crypto, bytes aleatórios seguros) →
   inválida, ID duplicado): a lista, com o erro no topo;
 - tudo certo: grava o ID novo na planilha (se for o caso), copia o modelo no
   Drive, troca os marcadores e a caixa do QR (API do Slides), exporta o PDF,
-  entrega ao emissor e apaga a cópia. Se falhar depois da cópia, a cópia também
+  entrega ao emissor (arquivo "Nome Último-sobrenome - Tipo do documento.pdf")
+  e apaga a cópia. Se falhar depois da cópia, a cópia também
   é apagada.
 
-Login: sem sessão, o **Autorizar** mostra a tela com o botão "Fazer login com o
-Google" (padrão visual do Google, sem script: é um link), com um `state`
+Login: sem sessão, o **Autorizar** mostra a tela de login, no leiaute do login
+do Google, com o logo da escola e o botão "Fazer login com o Google" (padrão
+visual do Google, sem script: é um link), com um `state`
 aleatório guardado num cookie. O Google volta em `/webhook/emitir-login`; o
 fluxo confere o `state`, troca o código pelo e-mail da conta (**Trocar
 código** → **Conta Google**) e o subfluxo abre uma sessão de 8 horas (cookie
