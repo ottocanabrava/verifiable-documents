@@ -239,13 +239,16 @@ def validar():
 
 
 def pdf_for(record):
-    """PDF do registro; busca o conteúdo do curso só se o tipo precisar."""
+    """PDF do registro; busca o conteúdo do curso só se o documento tiver a página de conteúdo."""
     base = os.environ.get("VALIDATION_BASE_URL", "").strip()
     if not base:
         raise ValueError("VALIDATION_BASE_URL não configurada: o documento sairia sem QR de validação")
     template = TEMPLATES.get(str(record.get("tipo_documento", "")).strip())
+    semestre = str(record.get("semestre_conteudo", "")).strip()
     if template and "conteudo" in template.REQUIRED:
         record = {**record, "conteudo": conteudo_do_curso(_load("LOAD_CONTEUDOS"), record.get("curso", ""))}
+    elif semestre and getattr(template, "CONTEUDO_OPCIONAL", False):
+        record = {**record, "conteudo": conteudo_do_curso(_load("LOAD_CONTEUDOS"), record.get("curso", ""), semestre)}
     return render(record, issuer_from_env(), base)
 
 

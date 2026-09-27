@@ -151,7 +151,14 @@ conteúdos (`curso | semestre | item`, como na
 [especificação](../docs/especificacao.md#fonte-dos-dados); pode ser uma aba da
 mesma planilha, escolhida no nó **Conteúdo dos cursos**). Os itens do curso
 (sem diferenciar maiúsculas) saem na ordem da aba, com o semestre em
-maiúsculas como título, em duas colunas. Sem conteúdo cadastrado, ou com
+maiúsculas como título, enchendo a primeira coluna e seguindo na segunda.
+
+O `certificado_semestre` usa o mesmo modelo de duas páginas quando
+`semestre_conteudo` está preenchida (no formulário, o campo "Página de
+conteúdo", que só aparece nesse tipo e lista os semestres da aba; no CSV, a
+coluna de mesmo nome). A segunda página traz só os itens daquele semestre, e a
+frase de abertura diz "no 1º semestre do curso de…". O cadastro já confere se
+há conteúdo para o curso e o semestre escolhidos. Sem conteúdo cadastrado, ou com
 conteúdo que não cabe na página (cerca de 26 linhas por coluna), o PDF não é
 gerado e a tela diz o porquê. Os títulos de semestre saem em maiúsculas; com os
 IDs das duas caixas de conteúdo do modelo em `CAIXAS_CONTEUDO` (lidos uma vez
@@ -190,7 +197,7 @@ Para usar, além dos passos da validação:
 |---|---|---|
 | `{{id}}`, `{{data}}` (por extenso) | ✓ | ✓ |
 | `{{nome}}`, `{{CURSO}}` (maiúsculas), `{{carga_horaria}}`, `{{conclusao}}` ("concluiu o semestre do curso de") | ✓ | |
-| 2ª página do certificado de curso: `{{CURSO}}`, `{{curso}}`, `{{carga_horaria}}`, `{{conteudo_1}}` e `{{conteudo_2}}` (uma caixa por coluna), `{{nome}}`, `{{id}}` | ✓ | |
+| 2ª página (conteúdo): `{{CURSO}}`, `{{introducao}}` (frase de abertura), `{{conteudo_1}}` e `{{conteudo_2}}` (uma caixa por coluna), `{{nome}}`, `{{id}}` | ✓ | |
 | `{{TITULO}}`, `{{abertura}}`, `{{NOME}}`, `{{cpf}}`, `{{rg}}`, `{{ENDERECO}}`, `{{situacao}}`, `{{curso_destaque}}`, `{{extras}}` (dia de aula e carga horária, se houver) | | ✓ |
 
 Os textos que mudam por tipo são os mesmos da versão Python.
