@@ -106,6 +106,21 @@ use `organizationId` (liga o certificado à página); sem ela, `organizationName
   **nunca** servido pela validação pública.
 - Nenhum PDF é armazenado pela validação: o documento é sempre gerado a partir
   da planilha.
+- **Compartilhar:** na lista da emissão, cada documento **ativo**, com ID único
+  e tipo conhecido, tem um texto pronto para mandar ao aluno, com links para
+  WhatsApp e e-mail. O texto leva só o que a validação pública já mostra
+  (primeiro nome, tipo, curso, código e link de validação), nunca CPF, RG ou
+  endereço:
+
+  ```
+  Olá, <primeiro nome>! Seu <tipo em minúsculas> (<curso>) foi emitido.
+  Código de validação: <id>
+  Para conferir, acesse: <URL de validação>?id=<id>
+  Ou abra <URL de validação> e digite o código.
+  ```
+
+  Nas declarações, "Sua … foi emitida". Sem URL de validação configurada, não
+  aparece.
 
 ## Credenciais
 

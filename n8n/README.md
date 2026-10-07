@@ -106,7 +106,10 @@ documento** → uma destas saídas:
 
 - sem parâmetro: lista dos documentos da planilha, com o nome legível do tipo,
   a situação e um botão "Baixar PDF" em cada um (`?id=` ou, para linha sem ID,
-  `?linha=`), em cartões que cabem no celular;
+  `?linha=`), em cartões que cabem no celular. Documentos ativos com ID ganham
+  também **Compartilhar**: abre um quadro (só HTML e CSS) com o texto pronto
+  para o aluno e links para WhatsApp e e-mail, montado no **Preparar
+  documento** a partir de `URL_VALIDACAO`;
 - `?novo`: formulário de cadastro. CPF, RG, endereço e dia de aula só aparecem
   quando o tipo é declaração (CSS, sem script). O envio (POST no mesmo
   endereço) passa pelas mesmas conferências da emissão, ganha um ID novo, é

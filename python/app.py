@@ -12,6 +12,7 @@ import threading
 import time
 import unicodedata
 from collections import Counter
+from urllib.parse import quote, urlencode
 
 import click
 from flask import Flask, Response, abort, render_template_string, request, send_file
@@ -281,6 +282,10 @@ ADMIN_PAGE = """<!doctype html>
   table { width: 100%; border-collapse: collapse; font-size: .9rem; }
   th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #e1e9e9; white-space: nowrap; }
   a.btn { display: inline-block; padding: 6px 12px; border-radius: 6px; background: #0e7c7b; color: #fff; text-decoration: none; }
+  details { display: inline-block; margin-left: 6px; }
+  summary { display: inline-block; padding: 5px 11px; border-radius: 6px; border: 1px solid #0e7c7b; color: #0e7c7b; cursor: pointer; }
+  details[open] > div { margin-top: 8px; display: grid; gap: 8px; white-space: normal; max-width: 340px; }
+  details textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: .85rem; resize: none; }
   .bad { color: #b3261e; }
 </style>
 </head>
@@ -304,7 +309,11 @@ ADMIN_PAGE = """<!doctype html>
         <td>{{ d.nome }}</td><td>{{ d.tipo_documento }}</td><td>{{ d.curso }}</td>
         <td>{{ d.data_emissao }}</td><td>{{ d.status }}</td>
         <td>{% if d.problema %}<span class="bad">{{ d.problema }}</span>
-            {% else %}<a class="btn" href="{{ url_for('emitir_pdf', doc_id=d.id) }}">Baixar PDF</a>{% endif %}</td>
+            {% else %}<a class="btn" href="{{ url_for('emitir_pdf', doc_id=d.id) }}">Baixar PDF</a>
+            {% if d.compartilhar %}<details><summary>Compartilhar</summary><div>
+              <textarea readonly rows="8" aria-label="Texto para enviar ao aluno">{{ d.compartilhar.texto }}</textarea>
+              <span><a class="btn" href="{{ d.compartilhar.whatsapp }}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+              <a class="btn" href="{{ d.compartilhar.email }}">E-mail</a></span></div></details>{% endif %}{% endif %}</td>
       </tr>
       {% endfor %}
     </table></div>
@@ -337,6 +346,29 @@ def require_admin():
     return ask
 
 
+def share_text(record):
+    """Texto para mandar ao aluno: só o que a validação pública já mostra (nunca CPF)."""
+    base = os.environ.get("VALIDATION_BASE_URL", "").strip()
+    template = TEMPLATES.get(str(record.get("tipo_documento", "")).strip())
+    if not base or template is None or str(record.get("status", "")).strip().lower() != "ativo":
+        return None
+    doc_id = str(record.get("id", "")).strip()
+    curso = str(record.get("curso", "")).strip()
+    nome = (str(record.get("nome", "")).split() or [""])[0]
+    dela = template.NOME.startswith("Declaração")
+    texto = "\n".join([
+        f"Olá, {nome}! {'Sua' if dela else 'Seu'} {template.NOME.lower()} ({curso}) foi {'emitida' if dela else 'emitido'}.",
+        f"Código de validação: {doc_id}",
+        f"Para conferir, acesse: {base}?id={quote(doc_id)}",
+        f"Ou abra {base} e digite o código.",
+    ])
+    return {
+        "texto": texto,
+        "whatsapp": "https://wa.me/?" + urlencode({"text": texto}, quote_via=quote),
+        "email": "mailto:?" + urlencode({"subject": f"{template.NOME} ({curso})", "body": texto}, quote_via=quote),
+    }
+
+
 def admin_page(records, erro=None, status=200):
     existing = {str(r.get("id", "")).strip() for r in records}
     novos = []
@@ -354,7 +386,7 @@ def admin_page(records, erro=None, status=200):
 
     docs = [
         {**{k: str(r.get(k, "")).strip() for k in ("id", "nome", "tipo_documento", "curso", "data_emissao", "status")},
-         "problema": problema(r)}
+         "problema": problema(r), "compartilhar": None if problema(r) else share_text(r)}
         for r in reversed(records)
     ]
     html = render_template_string(ADMIN_PAGE, docs=docs, novos=novos, erro=erro, emissor=os.environ.get("ISSUER_NOME", ""))

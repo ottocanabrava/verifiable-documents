@@ -825,3 +825,66 @@ def test_qr_e_pdf_da_declaracao_sem_dados_privados(admin):
     metadados = " ".join(str(v) for v in (PdfReader(io.BytesIO(r.data)).metadata or {}).values())
     for privado in (DECLARACAO["cpf"], DECLARACAO["rg"], DECLARACAO["endereco"], DECLARACAO["nome"]):
         assert privado not in url and privado not in metadados
+
+
+# --- Compartilhar (emissão) ---
+
+def test_compartilhar_texto_e_links_do_certificado(monkeypatch):
+    from urllib.parse import parse_qs, urlsplit
+
+    monkeypatch.setenv("VALIDATION_BASE_URL", BASE)
+    s = app_module.share_text(CERTIFICADO)
+    assert s["texto"] == (
+        "Olá, Maria! Seu certificado de conclusão de curso (Inglês) foi emitido.\n"
+        "Código de validação: k7Qm2xPz9aBc\n"
+        f"Para conferir, acesse: {BASE}?id=k7Qm2xPz9aBc\n"
+        f"Ou abra {BASE} e digite o código."
+    )
+    assert s["whatsapp"].startswith("https://wa.me/?text=")
+    assert parse_qs(urlsplit(s["whatsapp"]).query)["text"] == [s["texto"]]
+    q = parse_qs(urlsplit(s["email"]).query)
+    assert s["email"].startswith("mailto:?") and q["body"] == [s["texto"]]
+    assert q["subject"] == ["Certificado de conclusão de curso (Inglês)"]
+
+
+def test_compartilhar_declaracao_no_feminino_e_sem_dados_privados(monkeypatch):
+    monkeypatch.setenv("VALIDATION_BASE_URL", BASE)
+    s = app_module.share_text(DECLARACAO)
+    assert s["texto"].startswith("Olá, João! Sua declaração de matrícula (espanhol) foi emitida.")
+    tudo = " ".join(s.values())
+    for privado in (DECLARACAO["cpf"], DECLARACAO["rg"], "Rua Fictícia", "Ru%C3%A1"):
+        assert privado not in tudo
+
+
+@pytest.mark.parametrize("record", [
+    {**CERTIFICADO, "status": "revogado"},
+    {**CERTIFICADO, "tipo_documento": "diploma"},
+])
+def test_compartilhar_so_documento_ativo_e_de_tipo_conhecido(monkeypatch, record):
+    monkeypatch.setenv("VALIDATION_BASE_URL", BASE)
+    assert app_module.share_text(record) is None
+
+
+def test_compartilhar_sem_validation_base_url_nao_aparece(monkeypatch):
+    monkeypatch.delenv("VALIDATION_BASE_URL", raising=False)
+    assert app_module.share_text(CERTIFICADO) is None
+
+
+def test_emissao_mostra_compartilhar_so_em_documento_valido(admin):
+    linhas = [CERTIFICADO, DECLARACAO, {**CERTIFICADO, "id": "RevogadoXXXX", "nome": "Carla Revogada", "status": "revogado"},
+              {**CERTIFICADO, "id": "DuplicadoXYZ", "nome": "Dup Um"}, {**CERTIFICADO, "id": "DuplicadoXYZ", "nome": "Dup Dois"},
+              {**CERTIFICADO, "id": "curto", "nome": "Id Ruim"}]
+    app_module.app.config["LOAD_RECORDS"] = lambda: linhas
+    body = admin.get("/emitir", headers=auth()).get_data(as_text=True)
+    assert body.count("<summary>Compartilhar</summary>") == 2  # certificado e declaração ativos
+    assert "id%3DRevogadoXXXX" not in body and "id%3DDuplicadoXYZ" not in body
+    for privado in (DECLARACAO["cpf"], DECLARACAO["rg"]):
+        assert privado not in body
+
+
+def test_compartilhar_escapa_html_vindo_da_planilha(admin):
+    linhas = [{**CERTIFICADO, "nome": "<script>alert(1)</script> Ana", "curso": '"><img src=x onerror=alert(1)>'}]
+    app_module.app.config["LOAD_RECORDS"] = lambda: linhas
+    body = admin.get("/emitir", headers=auth()).get_data(as_text=True)
+    assert "<summary>Compartilhar</summary>" in body
+    assert "<script>alert" not in body and "<img src=x" not in body

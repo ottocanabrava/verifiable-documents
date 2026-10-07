@@ -15,7 +15,7 @@ src/
   linkedin.py          link "Adicionar ao LinkedIn" dos certificados
   templates/           um módulo de layout por tipo de documento
     assets/            fundo do certificado e fonte Montserrat (SIL OFL)
-tests/                 144 testes, incluindo o fluxo registro -> PDF -> QR -> página
+tests/                 151 testes, incluindo o fluxo registro -> PDF -> QR -> página
 Dockerfile
 DEPLOY.md              publicação com Docker
 .env.example           variáveis de ambiente (sem valores reais)
@@ -67,6 +67,8 @@ flask --app app run             # /validar (público) e /emitir (com senha)
   ela configurada, a área não existe. Depois de 10 senhas erradas em um
   minuto, o visitante fica bloqueado até a janela passar, inclusive para a
   senha certa. A emissão lê a planilha sem cache e marca IDs repetidos.
+  Documentos ativos ganham o botão **Compartilhar**: texto pronto para o
+  aluno, com links para WhatsApp e e-mail (ver a especificação).
 - O QR code aponta para `VALIDATION_BASE_URL?id=<id>` e também é um link
   clicável no PDF. Sem `VALIDATION_BASE_URL`, a emissão falha em vez de gerar
   um PDF sem QR.
