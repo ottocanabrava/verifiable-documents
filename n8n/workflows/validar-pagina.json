@@ -1,0 +1,64 @@
+{
+  "name": "Validar documento: página",
+  "nodes": [
+    {
+      "id": "5b1f0c1e-0003-4000-8000-000000000001",
+      "name": "Chamado pelo fluxo de validação",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "inputSource": "passthrough"
+      }
+    },
+    {
+      "id": "5b1f0c1e-0003-4000-8000-000000000002",
+      "name": "Montar página",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5b1f0c1e-0003-4000-8000-000000000003",
+              "name": "html",
+              "type": "string",
+              "value": "=<!doctype html>\n<html lang=\"pt-BR\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Validação de documentos</title>\n<style>\n  body { margin: 0; font-family: system-ui, sans-serif; background: #f2f5f5; color: #1f2a2b; }\n  header { background: {{ $json.cor }}; color: #fff; padding: 28px 16px; text-align: center;{{ $json.destaque ? ' border-bottom: 4px solid ' + $json.destaque + ';' : '' }} }\n  header img { display: inline-block; height: 64px; width: auto; background: #fff; padding: 0 8px; border-radius: 12px; margin-bottom: 14px; }\n  header h1 { margin: 0; font-size: 1.25rem; letter-spacing: .04em; }\n  header p { margin: 6px 0 0; opacity: .75; font-size: .9rem; }\n  main { max-width: 520px; margin: 24px auto; padding: 0 16px; }\n  form { display: flex; gap: 8px; }\n  input { flex: 1; min-width: 0; padding: 10px 12px; font-size: 1rem; border: 1px solid #c3d0d0; border-radius: 8px; }\n  button { padding: 10px 16px; font-size: 1rem; border: 0; border-radius: 8px; background: {{ $json.botao }}; color: #fff; cursor: pointer; }\n  .card { margin-top: 20px; background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }\n  .status { font-weight: 700; font-size: 1.1rem; margin: 0 0 12px; }\n  .ok { color: #1d7a45; } .bad { color: #b3261e; }\n  dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; }\n  dt { color: #5f6f70; } dd { margin: 0; font-weight: 600; }\n  a.linkedin { display: block; margin-top: 16px; padding: 10px 16px; border-radius: 8px; background: #0a66c2;\n               color: #fff; text-align: center; text-decoration: none; font-weight: 600; }\n</style>\n</head>\n<body>\n<header>\n  {{ $json.logo_url ? '<img src=\"' + $json.logo_url + '\" alt=\"' + $json.emissor + '\"><br>' : '' }}\n  <h1>VALIDAÇÃO DE DOCUMENTOS</h1>\n  {{ $json.emissor ? '<p>' + $json.emissor + '</p>' : '' }}\n</header>\n<main>\n  <form method=\"get\" action=\"\">\n    <input name=\"id\" value=\"{{ $json.id }}\" placeholder=\"ID de validação\" aria-label=\"ID de validação\" maxlength=\"64\" required>\n    <button type=\"submit\">Validar</button>\n  </form>\n  {{ $json.resultado === 'valido' ? `<div class=\"card\">\n    <p class=\"status ok\">✓ Documento válido</p>\n    <dl>\n      <dt>Documento</dt><dd>${$json.doc.tipo}</dd>\n      <dt>Nome</dt><dd>${$json.doc.nome}</dd>\n      <dt>Curso</dt><dd>${$json.doc.curso}</dd>\n      ${$json.doc.carga_horaria ? `<dt>Carga horária</dt><dd>${$json.doc.carga_horaria} horas</dd>` : ''}\n      <dt>Emissão</dt><dd>${$json.doc.data_emissao}</dd>\n    </dl>\n    ${$json.linkedin ? `<a class=\"linkedin\" href=\"${$json.linkedin}\" target=\"_blank\" rel=\"noopener noreferrer\">Adicionar ao LinkedIn</a>` : ''}\n  </div>` : $json.resultado === 'invalido' ? `<div class=\"card\">\n    <p class=\"status bad\">✗ Este documento não é mais válido.</p>\n    ${$json.doc ? `<dl>\n      ${$json.doc.tipo ? `<dt>Documento</dt><dd>${$json.doc.tipo}</dd>` : ''}\n      ${$json.doc.nome ? `<dt>Nome</dt><dd>${$json.doc.nome}</dd>` : ''}\n    </dl>` : ''}\n  </div>` : ({\n    nao_encontrado: '<div class=\"card\"><p class=\"status bad\">Documento não encontrado.</p>Confira o ID e tente de novo.</div>',\n    limite: '<div class=\"card\"><p class=\"status bad\">Muitas consultas.</p>Aguarde um minuto e tente de novo.</div>',\n    indisponivel: '<div class=\"card\"><p class=\"status bad\">Serviço temporariamente indisponível.</p>Tente de novo em alguns minutos.</div>',\n  })[$json.resultado] || '' }}\n</main>\n</body>\n</html>"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Chamado pelo fluxo de validação": {
+      "main": [
+        [
+          {
+            "node": "Montar página",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false,
+    "saveExecutionProgress": false
+  },
+  "pinData": {}
+}

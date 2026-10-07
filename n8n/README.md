@@ -12,7 +12,8 @@ próprio n8n.
 
 ## Fluxos
 
-- `workflows/validar.json` e `workflows/validar-preparar.json`: página pública
+- `workflows/validar.json`, `workflows/validar-preparar.json` e
+  `workflows/validar-pagina.json`: página pública
   de validação (webhook), com o botão "Adicionar ao LinkedIn" nos certificados
   válidos. **Pronto.**
 - `workflows/qr.json`: QR code de validação desenhado no próprio n8n (PNG, sem
@@ -37,7 +38,10 @@ aquele `id`) → **Montar página** (mesmas regras e mesma página da versão Py
 O **Preparar** fica num subfluxo à parte (`validar-preparar.json`), chamado pelo
 nó **Preparar (subfluxo)**. Assim cada fluxo tem um só nó Code: há ambientes cujo
 firewall (WAF) barra o salvamento quando os dois estão juntos (ver abaixo). O
-contador do limite de consultas fica nos dados estáticos do subfluxo.
+contador do limite de consultas fica nos dados estáticos do subfluxo. Pelo mesmo
+motivo, o **Montar página** só calcula os dados (já escapados) e o HTML sai do
+subfluxo `validar-pagina.json`, num nó Set, chamado pelo nó **Página
+(subfluxo)**.
 
 Para usar (a planilha segue o formato da
 [especificação](../docs/especificacao.md#fonte-dos-dados): uma linha por
@@ -45,9 +49,10 @@ documento, com um `id` aleatório de 12 letras ou dígitos):
 
 1. Crie uma credencial **Google Sheets OAuth2 API** (o nó do Google Sheets não
    aceita a credencial genérica "Google OAuth2 API").
-2. Importe primeiro `validar-preparar.json` e depois `validar.json`
-   (*Import from file*). No nó **Preparar (subfluxo)**, escolha o fluxo
-   "Validar documento: preparar".
+2. Importe primeiro `validar-preparar.json` e `validar-pagina.json`, depois
+   `validar.json` (*Import from file*). No nó **Preparar (subfluxo)**, escolha o
+   fluxo "Validar documento: preparar"; no **Página (subfluxo)**, "Validar
+   documento: página".
 3. No nó **Planilha de documentos**, selecione a credencial e escolha a planilha
    e a primeira aba.
 4. No topo do nó **Montar página**, preencha `EMISSOR`, `URL_VALIDACAO` (a URL de
@@ -55,7 +60,7 @@ documento, com um `id` aleatório de 12 letras ou dígitos):
    `LINKEDIN_ORGANIZATION_ID`. A identidade visual é opcional: `LOGO_URL`, `COR`
    (cabeçalho e botão) e `COR_DESTAQUE` (faixa sob o cabeçalho). Em branco, a
    página fica como no exemplo do README principal.
-5. Publique os dois fluxos, o subfluxo primeiro. Depois de qualquer edição,
+5. Publique os três fluxos, os subfluxos primeiro. Depois de qualquer edição,
    publique de novo: o n8n salva a edição, mas continua servindo a última
    versão publicada.
 
