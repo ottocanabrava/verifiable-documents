@@ -5,8 +5,7 @@ Fluxos do [n8n](https://n8n.io) que implementam a mesma
 código: o PDF sai de um modelo no Google Slides e a validação é servida pelo
 próprio n8n.
 
-> Validação pronta; emissão publicada e testada até a geração do PDF, que
-> ainda depende da configuração do Google no ambiente. Os fluxos entram aqui
+> Validação e emissão prontas, testadas de ponta a ponta. Os fluxos entram aqui
 > exportados **sem credenciais** nem dados da escola: os valores de
 > configuração ficam só no n8n.
 
@@ -239,8 +238,10 @@ escapado, cadastro gravado na planilha, sem CPF por ser certificado, e volta
 para a lista com o documento novo), tela de login (cookie do `state` passando
 pelo proxy) e volta do Google com `state` errado (tela de novo, com aviso) ou
 código falso (erro 502). Antes, ainda com senha no lugar do login: falha no
-Slides (cópia apagada, erro 502 para o emissor). Falta o login de ponta a ponta
-e a geração do PDF, que dependem da configuração do Google.
+Slides (cópia apagada, erro 502 para o emissor). Depois, de ponta a ponta num
+navegador (Chromium), com login pelo Google: cadastro, PDF, revogar pelo botão
+(com motivo e confirmação), validação do revogado com o nome parcial, PDF de
+revogado recusado e sessão aberta antes do token ganhando um no primeiro acesso.
 
 ## Conexão com o Google
 

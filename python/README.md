@@ -15,7 +15,7 @@ src/
   linkedin.py          link "Adicionar ao LinkedIn" dos certificados
   templates/           um módulo de layout por tipo de documento
     assets/            fundo do certificado e fonte Montserrat (SIL OFL)
-tests/                 151 testes, incluindo o fluxo registro -> PDF -> QR -> página
+tests/                 157 testes, incluindo o fluxo registro -> PDF -> QR -> página
 Dockerfile
 DEPLOY.md              publicação com Docker
 .env.example           variáveis de ambiente (sem valores reais)

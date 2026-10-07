@@ -113,7 +113,7 @@ programático (sempre no certificado de curso; no de semestre, a pedido).
 
 | | [Python](python/) | [n8n](n8n/) |
 |---|---|---|
-| Situação | Pronta | Validação pronta; emissão testada até a geração do PDF, que depende da configuração do Google no ambiente |
+| Situação | Pronta | Pronta |
 | Stack | Flask, ReportLab, gspread, Docker | n8n, Google Sheets, Google Slides |
 | PDF | Desenhado em código, fonte reduzida para nomes e conteúdos longos | Modelo no Google Slides preenchido pelo fluxo, com tamanho fixo |
 | Cache da planilha | 30 s na validação | Nenhum |
@@ -122,7 +122,7 @@ programático (sempre no certificado de curso; no de semestre, a pedido).
 | Cadastro | Direto na planilha | Formulário, CSV com vários documentos ou planilha |
 | Revogação | Direto na planilha | Botão na emissão, com motivo e confirmação, ou planilha |
 | Vários PDFs | Um por vez | Vários num ZIP |
-| Testes | 151 automatizados | Validação manual dos fluxos |
+| Testes | 157 automatizados | Validação manual dos fluxos |
 
 Detalhes e demais diferenças: [`python/README.md`](python/README.md) e
 [`n8n/README.md`](n8n/README.md).
