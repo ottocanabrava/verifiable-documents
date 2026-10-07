@@ -45,6 +45,7 @@ def test_id_existente_retorna_dados_publicos():
     assert view == {
         "tipo": "Certificado de conclusão de curso",
         "nome": "Maria Exemplo da Silva",
+        "nome_parcial": "Maria S.",
         "curso": "Inglês",
         "carga_horaria": "40",
         "data_emissao": "15 de março de 2026",
@@ -775,8 +776,22 @@ def test_xss_vindo_da_planilha_e_escapado_na_emissao(admin):
 def test_revogado_nao_mostra_dados(client):
     body = client.get("/validar?id=RevogadoXXXX").get_data(as_text=True)
     assert "não é mais válido" in body
-    for dado in ("Maria Exemplo da Silva", "Inglês", "40 horas", "LinkedIn"):
+    assert "Maria S." in body and "Certificado de conclusão" in body
+    for dado in ("Maria Exemplo da Silva", "Exemplo", "Inglês", "40 horas", "LinkedIn"):
         assert dado not in body
+
+
+@pytest.mark.parametrize("nome, parcial", [
+    ("Maria Exemplo da Silva", "Maria S."), ("  Ana  ", "Ana"), ("", ""), ("<b>Ana</b> Lima", "<b>Ana</b> L."),
+])
+def test_nome_parcial(nome, parcial):
+    assert public_view({**CERTIFICADO, "nome": nome})["nome_parcial"] == parcial
+
+
+def test_revogado_nome_parcial_escapado(client):
+    app_module.app.config["LOAD_RECORDS"] = lambda: [{**CERTIFICADO, "nome": "<script>x</script> Lima", "status": "revogado"}]
+    body = client.get(f"/validar?id={CERTIFICADO['id']}").get_data(as_text=True)
+    assert "<script>x" not in body and "&lt;script&gt;x&lt;/script&gt; L." in body
 
 
 def test_tipo_desconhecido_nao_valida_nem_quebra(client):
@@ -888,3 +903,11 @@ def test_compartilhar_escapa_html_vindo_da_planilha(admin):
     body = admin.get("/emitir", headers=auth()).get_data(as_text=True)
     assert "<summary>Compartilhar</summary>" in body
     assert "<script>alert" not in body and "<img src=x" not in body
+
+
+def test_revogado_nao_gera_pdf(admin):
+    app_module.app.config["LOAD_RECORDS"] = lambda: [{**CERTIFICADO, "status": "revogado"}]
+    r = admin.get(f"/emitir/{CERTIFICADO['id']}.pdf", headers=auth())
+    body = r.get_data(as_text=True)
+    assert r.status_code == 422 and "não está ativo" in body
+    assert f"/emitir/{CERTIFICADO['id']}.pdf" not in body  # nem o botão na lista

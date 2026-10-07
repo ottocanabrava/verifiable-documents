@@ -66,6 +66,9 @@ para aquele curso e semestre, o certificado não é gerado.
   em vez de gerar documento sem QR.
 - Resposta para ID válido: **só** tipo, nome, curso, carga horária e data de
   emissão. Nunca CPF, RG, endereço ou qualquer outro dado do aluno.
+- Resposta para ID não ativo (ex.: revogado): "não é mais válido", com **só** o
+  tipo e o nome parcial (primeiro nome e inicial do último sobrenome, ex.:
+  "Maria S."), para quem confere saber que digitou o código certo.
 - ID inexistente ou malformado: "Documento não encontrado", sem erro técnico.
 - Limite de consultas por visitante, para dificultar abuso.
 - Falha ao ler a planilha: "indisponível" (HTTP 503), sem detalhes técnicos.
@@ -110,6 +113,8 @@ use `organizationId` (liga o certificado à página); sem ela, `organizationName
   **nunca** servido pela validação pública.
 - Nenhum PDF é armazenado pela validação: o documento é sempre gerado a partir
   da planilha.
+- PDF só de documento **ativo**: um revogado não é gerado de novo, para não
+  circular papel sem nada que mostre a revogação.
 - **Revogar:** onde a emissão escreve na planilha, cada documento **ativo**,
   com ID único, tem um botão "Revogar" que pede o motivo e uma confirmação
   explícita. Motivos: Teste, Emissão indevida, Dados incorretos (será

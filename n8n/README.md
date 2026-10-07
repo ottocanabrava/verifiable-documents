@@ -106,7 +106,8 @@ com a conta Google) → **Gerar ID** (nó Crypto, bytes aleatórios seguros) →
 documento** → uma destas saídas:
 
 - sem parâmetro: lista dos documentos da planilha, com o nome legível do tipo,
-  a situação e um botão "Baixar PDF" em cada um (`?id=` ou, para linha sem ID,
+  a situação e um botão "Baixar PDF" em cada documento ativo (revogado não
+  ganha PDF) (`?id=` ou, para linha sem ID,
   `?linha=`), em cartões que cabem no celular. Documentos ativos com ID ganham
   também **Compartilhar**: abre um quadro (só HTML e CSS) com o texto pronto
   para o aluno e links para WhatsApp e e-mail, montado no **Preparar
@@ -152,6 +153,12 @@ código** → **Conta Google**) e o subfluxo abre uma sessão de 8 horas (cookie
 partir de outro site) se o e-mail estiver em `PERMITIDOS`. A lista é conferida
 de novo a cada acesso: tirar um e-mail corta o acesso na hora. Sessões e
 logins pendentes ficam nos dados estáticos do subfluxo.
+
+O n8n serve as páginas dos webhooks com a CSP `sandbox` (origem opaca), e por
+isso o navegador não manda o cookie `SameSite=Lax` nos envios de formulário
+(POST). Cada sessão tem então um token próprio, que vai num campo oculto dos
+formulários (cadastro, CSV e revogar): o POST se identifica por ele, e outro
+site não o conhece.
 
 O **Preparar documento** só devolve dados, com os textos já escapados; o HTML
 fica nos subfluxos de tela, em expressões do nó Set, e a cor, o logo e o nome

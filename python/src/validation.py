@@ -77,9 +77,12 @@ def public_view(record):
         data = format_date_pt(parse_date(record.get("data_emissao", "")))
     except ValueError:
         data = ""
+    partes = str(record.get("nome", "")).split()
     return {
         "tipo": template.NOME if template else "",
         "nome": str(record.get("nome", "")).strip(),
+        # Revogado: só primeiro nome e inicial do último sobrenome ("Maria S.").
+        "nome_parcial": " ".join(partes[:1] + [partes[-1][0] + "."] if len(partes) > 1 else partes),
         "curso": str(record.get("curso", "")).strip(),
         "carga_horaria": str(record.get("carga_horaria", "")).strip(),
         "data_emissao": data,

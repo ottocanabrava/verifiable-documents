@@ -192,7 +192,13 @@ PAGE = """<!doctype html>
     {% if linkedin %}<a class="linkedin" href="{{ linkedin }}" target="_blank" rel="noopener noreferrer">Adicionar ao LinkedIn</a>{% endif %}
   </div>
   {% elif resultado == "invalido" %}
-  <div class="card"><p class="status bad">✗ Este documento não é mais válido.</p></div>
+  <div class="card">
+    <p class="status bad">✗ Este documento não é mais válido.</p>
+    <dl>
+      {% if doc.tipo %}<dt>Documento</dt><dd>{{ doc.tipo }}</dd>{% endif %}
+      {% if doc.nome_parcial %}<dt>Nome</dt><dd>{{ doc.nome_parcial }}</dd>{% endif %}
+    </dl>
+  </div>
   {% elif resultado == "nao_encontrado" %}
   <div class="card"><p class="status bad">Documento não encontrado.</p>Confira o ID e tente de novo.</div>
   {% elif resultado == "limite" %}
@@ -241,6 +247,9 @@ def validar():
 
 def pdf_for(record):
     """PDF do registro; busca o conteúdo do curso só se o documento tiver a página de conteúdo."""
+    status = str(record.get("status", "")).strip()
+    if status.lower() != "ativo":  # revogado não ganha PDF: o papel circularia sem mostrar a revogação
+        raise ValueError(f'o documento não está ativo (status "{status}"); o PDF só sai de documento ativo')
     base = os.environ.get("VALIDATION_BASE_URL", "").strip()
     if not base:
         raise ValueError("VALIDATION_BASE_URL não configurada: o documento sairia sem QR de validação")
@@ -309,7 +318,7 @@ ADMIN_PAGE = """<!doctype html>
         <td>{{ d.nome }}</td><td>{{ d.tipo_documento }}</td><td>{{ d.curso }}</td>
         <td>{{ d.data_emissao }}</td><td>{{ d.status }}</td>
         <td>{% if d.problema %}<span class="bad">{{ d.problema }}</span>
-            {% else %}<a class="btn" href="{{ url_for('emitir_pdf', doc_id=d.id) }}">Baixar PDF</a>
+            {% else %}{% if d.status|lower == "ativo" %}<a class="btn" href="{{ url_for('emitir_pdf', doc_id=d.id) }}">Baixar PDF</a>{% endif %}
             {% if d.compartilhar %}<details><summary>Compartilhar</summary><div>
               <textarea readonly rows="8" aria-label="Texto para enviar ao aluno">{{ d.compartilhar.texto }}</textarea>
               <span><a class="btn" href="{{ d.compartilhar.whatsapp }}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
