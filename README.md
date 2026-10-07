@@ -120,8 +120,9 @@ programático (sempre no certificado de curso; no de semestre, a pedido).
 | Limite de consultas | Exato, com trava entre threads | Aproximado |
 | Acesso à emissão | Senha | Login com a conta Google (e-mails ou domínio autorizados) |
 | Cadastro | Direto na planilha | Formulário, CSV com vários documentos ou planilha |
+| Revogação | Direto na planilha | Botão na emissão, com motivo e confirmação, ou planilha |
 | Vários PDFs | Um por vez | Vários num ZIP |
-| Testes | 144 automatizados | Validação manual dos fluxos |
+| Testes | 151 automatizados | Validação manual dos fluxos |
 
 Detalhes e demais diferenças: [`python/README.md`](python/README.md) e
 [`n8n/README.md`](n8n/README.md).

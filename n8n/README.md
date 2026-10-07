@@ -91,6 +91,7 @@ um `X-Forwarded-For` forjado é ignorado).
 | Histórico | Não há | Execuções não são salvas, para que os dados da linha consultada não fiquem no n8n |
 | Acesso à emissão | Senha, com limite de tentativas | Login com a conta Google (e-mails ou domínio autorizados) |
 | Cadastro | Direto na planilha | Formulário, CSV com vários documentos ou direto na planilha |
+| Revogação | Direto na planilha (a versão Python só lê) | Botão "Revogar" na lista, com motivo e confirmação, ou direto na planilha |
 | ID novo | Listado na emissão, colado na planilha à mão | Gerado no cadastro, ou na primeira emissão de uma linha sem ID |
 | Vários PDFs | Um por vez | Vários num ZIP (até 15 por vez) |
 | Nome do PDF | "Tipo - Nome completo.pdf" | "Nome Último-sobrenome - Tipo.pdf" |
@@ -109,7 +110,14 @@ documento** → uma destas saídas:
   `?linha=`), em cartões que cabem no celular. Documentos ativos com ID ganham
   também **Compartilhar**: abre um quadro (só HTML e CSS) com o texto pronto
   para o aluno e links para WhatsApp e e-mail, montado no **Preparar
-  documento** a partir de `URL_VALIDACAO`;
+  documento** a partir de `URL_VALIDACAO`. Também ganham **Revogar**: um quadro
+  com o motivo (Teste, Emissão indevida, Dados incorretos, Pedido do aluno ou
+  Outro, com justificativa) e a confirmação; o envio (POST, num formulário
+  próprio por documento, fora do formulário da lista) passa pelo **Preparar
+  documento**, que confere tudo, e o nó **Revogar na planilha** grava `status`,
+  `revogado_em`, `revogado_por` e `motivo_revogacao` na linha. Volta para a lista
+  com o aviso. Os revogados mostram o motivo na lista (nunca na validação). A
+  planilha precisa dessas três colunas no cabeçalho;
 - `?novo`: formulário de cadastro. CPF, RG, endereço e dia de aula só aparecem
   quando o tipo é declaração (CSS, sem script). O envio (POST no mesmo
   endereço) passa pelas mesmas conferências da emissão, ganha um ID novo, é

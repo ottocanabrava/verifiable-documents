@@ -16,6 +16,10 @@ id | tipo_documento | nome | curso | carga_horaria | data_emissao | status | cpf
 - `data_emissao`: `DD/MM/AAAA` ou `AAAA-MM-DD`.
 - `status`: só `ativo` é válido. Qualquer outro valor (ex.: `revogado`) faz o
   documento aparecer como "não é mais válido".
+- Colunas opcionais de revogação, preenchidas quando a emissão revoga um
+  documento: `revogado_em` (`DD/MM/AAAA HH:MM`, horário de Brasília),
+  `revogado_por` (e-mail de quem revogou) e `motivo_revogacao`. Nunca aparecem
+  na validação pública.
 
 Uma segunda planilha guarda o conteúdo programático, uma linha por item:
 
@@ -106,6 +110,13 @@ use `organizationId` (liga o certificado à página); sem ela, `organizationName
   **nunca** servido pela validação pública.
 - Nenhum PDF é armazenado pela validação: o documento é sempre gerado a partir
   da planilha.
+- **Revogar:** onde a emissão escreve na planilha, cada documento **ativo**,
+  com ID único, tem um botão "Revogar" que pede o motivo e uma confirmação
+  explícita. Motivos: Teste, Emissão indevida, Dados incorretos (será
+  reemitido), Pedido do aluno e Outro (justificativa obrigatória, até 300
+  caracteres). Grava `status = revogado` e as colunas de revogação. Desfazer
+  só pela planilha. Onde a emissão só lê a planilha, revogar é mudar o
+  `status` direto nela.
 - **Compartilhar:** na lista da emissão, cada documento **ativo**, com ID único
   e tipo conhecido, tem um texto pronto para mandar ao aluno, com links para
   WhatsApp e e-mail. O texto leva só o que a validação pública já mostra
