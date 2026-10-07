@@ -122,7 +122,7 @@ programático (sempre no certificado de curso; no de semestre, a pedido).
 | Cadastro | Direto na planilha | Formulário, CSV com vários documentos ou planilha |
 | Revogação | Direto na planilha | Botão na emissão, com motivo e confirmação, ou planilha |
 | Vários PDFs | Um por vez | Vários num ZIP |
-| Testes | 157 automatizados | Validação manual dos fluxos |
+| Testes | 156 automatizados | Validação manual dos fluxos |
 
 Detalhes e demais diferenças: [`python/README.md`](python/README.md) e
 [`n8n/README.md`](n8n/README.md).

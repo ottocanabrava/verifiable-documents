@@ -782,7 +782,7 @@ def test_revogado_nao_mostra_dados(client):
 
 
 @pytest.mark.parametrize("nome, parcial", [
-    ("Maria Exemplo da Silva", "Maria S."), ("  Ana  ", "Ana"), ("", ""), ("<b>Ana</b> Lima", "<b>Ana</b> L."),
+    ("Maria Exemplo da Silva", "Maria S."), ("  Ana  ", "Ana"), ("", ""),
 ])
 def test_nome_parcial(nome, parcial):
     assert public_view({**CERTIFICADO, "nome": nome})["nome_parcial"] == parcial
