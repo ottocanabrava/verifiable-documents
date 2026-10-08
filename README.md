@@ -7,7 +7,8 @@ do documento.
 Cada documento tem um ID aleatório de 12 caracteres. Quem recebe o documento
 escaneia o QR e consulta, numa página pública, o registro correspondente: se
 ele existe, se está ativo ou revogado, e só tipo, nome, curso, carga horária e
-data. CPF, RG e endereço nunca aparecem.
+data (do revogado, só o tipo e o nome abreviado). CPF, RG e endereço nunca
+aparecem.
 
 > Implementação técnica de um projeto real, feito para uma escola de idiomas.
 > Aqui só há dados fictícios e nenhuma credencial, para não identificar a
@@ -87,7 +88,9 @@ repositório completam o quadro.
 A consulta confirma que existe no registro do emissor um documento com aquele
 ID, qual o seu tipo, nome, curso, carga horária e data de emissão, e se ele está
 **ativo** ou **revogado**, conforme a leitura mais recente da planilha (até 30 s
-de cache no Python; sem cache no n8n).
+de cache no Python; sem cache no n8n). De um documento revogado, a página mostra
+só o tipo e o nome abreviado ("Maria S."), para quem confere saber que digitou o
+código certo; o motivo da revogação nunca aparece.
 
 Ela **não** detecta alteração posterior no arquivo PDF: quem confere deve
 comparar os dados mostrados na página com os do documento. Campos que a página
@@ -108,8 +111,10 @@ Problemas diferentes, que pediriam outra arquitetura:
 ## Implementações
 
 Em comum, pela especificação: colunas, tipos de documento, formato e checagem do
-ID, campos públicos, revogação, botão do LinkedIn e página de conteúdo
-programático (sempre no certificado de curso; no de semestre, a pedido).
+ID, campos públicos, revogação, botão do LinkedIn, página de conteúdo
+programático (sempre no certificado de curso; no de semestre, a pedido), texto
+pronto para compartilhar com o aluno (WhatsApp ou e-mail, só com o que a
+validação já mostra) e PDF só de documento ativo.
 
 | | [Python](python/) | [n8n](n8n/) |
 |---|---|---|
@@ -127,9 +132,13 @@ programático (sempre no certificado de curso; no de semestre, a pedido).
 Detalhes e demais diferenças: [`python/README.md`](python/README.md) e
 [`n8n/README.md`](n8n/README.md).
 
-| Login da emissão (n8n) | Lista com download em ZIP | Cadastro, com página de conteúdo a pedido |
+| Login da emissão (n8n) | Lista: PDF, ZIP, compartilhar e revogar | Cadastro, com página de conteúdo a pedido |
 |---|---|---|
-| <img src="docs/imagens/emissao-login.png" width="300" alt="Tela de login com o botão Fazer login com o Google"> | <img src="docs/imagens/emissao-lista.png" width="300" alt="Lista de documentos com caixas de seleção, Baixar marcados em ZIP, Importar CSV e Novo documento"> | <img src="docs/imagens/emissao-formulario.png" width="160" alt="Formulário de novo documento com o campo Página de conteúdo"> |
+| <img src="docs/imagens/emissao-login.png" width="300" alt="Tela de login com o botão Fazer login com o Google"> | <img src="docs/imagens/emissao-lista.png" width="300" alt="Lista de documentos: os ativos com Baixar PDF, Compartilhar e Revogar; o revogado com data, autor e motivo, sem botões"> | <img src="docs/imagens/emissao-formulario.png" width="160" alt="Formulário de novo documento com o campo Página de conteúdo"> |
+
+| Compartilhar com o aluno | Revogar, com motivo e confirmação | Validação do revogado |
+|---|---|---|
+| <img src="docs/imagens/emissao-compartilhar.png" width="300" alt="Quadro Compartilhar com o texto pronto para o aluno e os botões WhatsApp e E-mail"> | <img src="docs/imagens/emissao-revogar.png" width="300" alt="Quadro Revogar com os motivos, a justificativa e a confirmação"> | <img src="docs/imagens/validacao-revogado.png" width="160" alt="Página de validação dizendo que o documento não é mais válido, com o tipo e o nome abreviado"> |
 
 <sub>Telas da emissão n8n com a identidade padrão e dados fictícios.</sub>
 

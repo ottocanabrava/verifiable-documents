@@ -57,13 +57,14 @@ flask --app app run             # /validar (público) e /emitir (com senha)
 ```
 
 - **/validar** rejeita IDs fora do formato antes de consultar a planilha,
-  mostra só os campos públicos, trata como válido apenas `status = ativo` e
+  mostra só os campos públicos (do revogado, só o tipo e o nome abreviado),
+  trata como válido apenas `status = ativo` e
   limita cada visitante a 10 consultas por minuto (IPv6 contado por bloco
   /64). Guarda a planilha em cache por 30 s: uma revogação leva no máximo
   esse tempo para aparecer. ID repetido na planilha não valida. Se a planilha
   não puder ser lida, responde 503 com uma mensagem genérica.
-- **/emitir** lista os documentos com "Baixar PDF" em cada um e sugere IDs
-  novos. Usa a caixa de login do navegador (senha em `ADMIN_PASSWORD`); sem
+- **/emitir** lista os documentos com "Baixar PDF" em cada um ativo (revogado
+  não gera PDF) e sugere IDs novos. Usa a caixa de login do navegador (senha em `ADMIN_PASSWORD`); sem
   ela configurada, a área não existe. Depois de 10 senhas erradas em um
   minuto, o visitante fica bloqueado até a janela passar, inclusive para a
   senha certa. A emissão lê a planilha sem cache e marca IDs repetidos.
