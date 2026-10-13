@@ -157,7 +157,7 @@ validação já mostra) e PDF só de documento ativo.
 | Cadastro | Direto na planilha | Formulário, CSV com vários documentos ou planilha |
 | Revogação | Direto na planilha (a emissão só lê): mudar o `status`. A validação reflete em até 30 s, pelo cache | Botão na emissão, com motivo e confirmação (grava `status` e as colunas de revogação), ou planilha. A validação reflete na consulta seguinte |
 | Vários PDFs | Um por vez | Vários num ZIP (até 15) |
-| Testes | 156 automatizados (pytest), incluindo o fluxo registro → PDF → QR → página | Validação manual dos fluxos, inclusive de ponta a ponta num navegador |
+| Testes | 157 automatizados (pytest), incluindo o fluxo registro → PDF → QR → página | Validação manual dos fluxos, inclusive de ponta a ponta num navegador |
 
 Detalhes e demais diferenças: [`python/README.md`](python/README.md) e
 [`n8n/README.md`](n8n/README.md).
