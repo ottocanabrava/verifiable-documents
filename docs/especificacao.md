@@ -8,11 +8,11 @@ regra aqui, as duas mudam juntas.
 Uma planilha do Google, uma linha por documento emitido:
 
 ```
-id | tipo_documento | nome | curso | carga_horaria | data_emissao | status | cpf | rg | dia_aula | semestre_conteudo
+id | tipo_documento | nome | curso | carga_horaria | data_emissao | status | cpf | dia_aula | semestre_conteudo
 ```
 
 - Colunas em **texto simples**, para a planilha não converter datas nem cortar
-  zeros à esquerda de CPF/RG.
+  zeros à esquerda do CPF.
 - `data_emissao`: `DD/MM/AAAA` ou `AAAA-MM-DD`.
 - `status`: só `ativo` é válido. Qualquer outro valor (ex.: `revogado`) faz o
   documento aparecer como "não é mais válido".
@@ -37,16 +37,16 @@ planilha, agrupados por `semestre`.
 | `certificado_curso` | Certificado de conclusão de curso | `nome`, `curso`, `carga_horaria` + conteúdo do curso | |
 | `certificado_semestre` | Certificado de conclusão de semestre | `nome`, `curso`, `carga_horaria` | `semestre_conteudo` |
 | `certificado_trimestre` | Certificado de conclusão de trimestre | `nome`, `curso`, `carga_horaria` | |
-| `declaracao_matricula` | Declaração de matrícula | `nome`, `curso`, `cpf`, `rg` | `dia_aula`, `carga_horaria` |
-| `declaracao_termino_trimestre` | Declaração de término de trimestre | `nome`, `curso`, `cpf`, `rg` | `dia_aula`, `carga_horaria` |
-| `declaracao_termino_semestre` | Declaração de término de semestre | `nome`, `curso`, `cpf`, `rg` | `dia_aula`, `carga_horaria` |
+| `declaracao_matricula` | Declaração de matrícula | `nome`, `curso`, `cpf` | `dia_aula`, `carga_horaria` |
+| `declaracao_termino_trimestre` | Declaração de término de trimestre | `nome`, `curso`, `cpf` | `dia_aula`, `carga_horaria` |
+| `declaracao_termino_semestre` | Declaração de término de semestre | `nome`, `curso`, `cpf` | `dia_aula`, `carga_horaria` |
 
 `id` e `data_emissao` são obrigatórios em todos. O certificado de curso
 completo tem uma segunda página com o conteúdo do curso; sem conteúdo
 cadastrado, ele não é gerado.
 
-As declarações não trazem endereço: nem do aluno (só CPF e RG) nem da escola
-(só a cidade da sede).
+Do aluno, as declarações trazem só o CPF: nem RG nem endereço. Da escola, só a
+cidade da sede, sem endereço.
 
 O certificado de semestre tem uma página só. A pedido, ganha a mesma segunda
 página, só com o conteúdo de um semestre: basta preencher `semestre_conteudo`
@@ -113,7 +113,7 @@ use `organizationId` (liga o certificado à página); sem ela, `organizationName
   - login com a conta Google (OAuth), liberado só para os e-mails ou domínios
     autorizados na configuração. A senha e o limite de tentativas ficam com o
     Google.
-- O PDF das declarações contém CPF e RG: é entregue só ao emissor e
+- O PDF das declarações contém o CPF: é entregue só ao emissor e
   **nunca** servido pela validação pública.
 - Nenhum PDF é armazenado pela validação: o documento é sempre gerado a partir
   da planilha.

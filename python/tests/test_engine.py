@@ -136,8 +136,9 @@ def test_declaracao_contem_campos_esperados():
         "Zr4tW8nLq2Ys",
     ):
         assert expected in text
-    # Nem o endereço do aluno (mesmo preenchido na planilha) nem o da escola.
+    # Nem RG nem endereço do aluno (mesmo preenchidos na planilha), nem o endereço da escola.
     assert "FICTÍCIA" not in text.upper() and "residente" not in text and "sito na" not in text
+    assert "RG" not in text and DECLARACAO["rg"] not in text
     assert "com sede na cidade de Cidade Exemplo/UF, declara, para os fins" in text
 
 
@@ -147,6 +148,7 @@ def test_declaracao_termino_por_periodo(periodo):
     text = pdf_text(render(record, ISSUER))
     assert f"DECLARAÇÃO DE TÉRMINO DE {periodo.upper()}" in text
     assert f"declara que o {periodo} de JOÃO EXEMPLO SOUZA, inscrito(a) no CPF" in text
+    assert "000.000.000-00, foi concluído no" in text
     assert "foi concluído no CURSO DE INGLÊS da instituição." in text
 
 

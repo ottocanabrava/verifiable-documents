@@ -35,7 +35,7 @@ def _read_sheet(sheet_id):
 
     creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"])
     gc = gspread.authorize(creds)
-    # Tudo como texto: preserva zeros à esquerda de CPF/RG e IDs numéricos.
+    # Tudo como texto: preserva zeros à esquerda do CPF e IDs numéricos.
     return gc.open_by_key(sheet_id).sheet1.get_all_records(numericise_ignore=["all"])
 
 

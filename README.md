@@ -7,7 +7,7 @@ do documento.
 Cada documento tem um ID aleatório de 12 caracteres. Quem recebe o documento
 escaneia o QR e consulta, numa página pública, o registro correspondente: se
 ele existe, se está ativo ou revogado, e só tipo, nome, curso, carga horária e
-data (do revogado, só o tipo e o nome abreviado). CPF e RG nunca aparecem.
+data (do revogado, só o tipo e o nome abreviado). O CPF nunca aparece.
 
 > Implementação técnica de um projeto real, feito para uma escola de idiomas.
 > Aqui só há dados fictícios e nenhuma credencial, para não identificar a
@@ -75,10 +75,10 @@ planilha do Google (registro: uma linha por documento, com status)
 
 | Decisão | Por quê | Consequência |
 |---|---|---|
-| A planilha é o registro; o sistema não tem banco próprio | A especificação define a planilha como fonte dos dados; o emissor mantém as linhas, a validação só lê | Colunas em texto simples (datas e zeros à esquerda de CPF/RG). Revogar é mudar o `status` (direto na planilha, ou pelo botão Revogar da emissão n8n). Cada leitura custa chamadas à API do Google, com cota baixa: a rota pública da versão Python guarda a planilha em cache por 30 s (a revogação leva até esse tempo) |
+| A planilha é o registro; o sistema não tem banco próprio | A especificação define a planilha como fonte dos dados; o emissor mantém as linhas, a validação só lê | Colunas em texto simples (datas e zeros à esquerda do CPF). Revogar é mudar o `status` (direto na planilha, ou pelo botão Revogar da emissão n8n). Cada leitura custa chamadas à API do Google, com cota baixa: a rota pública da versão Python guarda a planilha em cache por 30 s (a revogação leva até esse tempo) |
 | PDF gerado sob demanda, nunca armazenado | A especificação define a planilha como única fonte: o documento é sempre gerado a partir dela | Reemitir gera o PDF a partir do estado atual da planilha; não há cópia do que foi entregue antes. No n8n, a cópia temporária do modelo é apagada, inclusive em caso de falha |
 | PDF só de documento ativo | Um documento revogado gerado de novo seria um papel igual ao válido, sem nada que mostrasse a revogação | A emissão recusa o PDF de qualquer linha com `status` diferente de `ativo` e mostra o motivo. Quem tiver um PDF antigo de documento revogado descobre pela validação |
-| A validação mostra só tipo, nome, curso, carga horária, data e status | A especificação separa o que a emissão usa do que a validação mostra: os dados pessoais das declarações (CPF, RG, dia de aula) ficam só na emissão | Esses campos nunca aparecem na página pública, e o PDF das declarações nunca é servido por ela |
+| A validação mostra só tipo, nome, curso, carga horária, data e status | A especificação separa o que a emissão usa do que a validação mostra: os dados pessoais das declarações (CPF, dia de aula) ficam só na emissão | Esses campos nunca aparecem na página pública, e o PDF das declarações nunca é servido por ela |
 | ID de 12 letras ou dígitos, aleatório (~71 bits), sem `-` ou `_` | Inviável descobrir documentos por tentativa; na planilha, um valor começando com `-` viraria fórmula | Formato conferido antes de qualquer consulta; ID repetido na planilha não valida nenhuma linha. É um identificador difícil de adivinhar, não uma prova de autenticidade |
 | URL de validação vem da configuração, nunca da requisição | O QR e o link do LinkedIn não dependem do `Host` recebido | Sem a URL configurada, a emissão falha em vez de gerar documento sem QR |
 | Limite de consultas próprio, sem biblioteca | A especificação pede um limite por visitante, para dificultar abuso | Python: 10 por minuto por IP (IPv6 por bloco /64), em memória de um processo; com várias instâncias, trocar por Flask-Limiter + Redis, como registrado no código. n8n: contador aproximado nos dados do fluxo |
@@ -94,7 +94,7 @@ planilha do Google (registro: uma linha por documento, com status)
   domínios autorizados (conferidos a cada acesso), sessão de 8 horas e um
   token por sessão nos formulários enviados por POST.
 - **Validação pública mínima.** Só os campos públicos; do revogado, só o tipo
-  e o nome abreviado. CPF, RG, dia de aula e as colunas de revogação
+  e o nome abreviado. CPF, dia de aula e as colunas de revogação
   (`revogado_em`, `revogado_por`, `motivo_revogacao`) nunca aparecem nela.
 - **Texto de compartilhar** só com o que a validação já mostra (primeiro nome,
   tipo, curso, código e link).
@@ -118,7 +118,7 @@ código certo; o motivo da revogação nunca aparece.
 
 Ela **não** detecta alteração posterior no arquivo PDF: quem confere deve
 comparar os dados mostrados na página com os do documento. Campos que a página
-não mostra (CPF, RG, horário das aulas, conteúdo programático) não são
+não mostra (CPF, horário das aulas, conteúdo programático) não são
 conferidos. Os documentos não têm assinatura digital nem hash, e o QR code é só
 um atalho para a consulta: a confiança na origem depende de a página aberta ser
 do domínio do emissor.
