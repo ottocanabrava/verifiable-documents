@@ -224,7 +224,8 @@ Para usar, além dos passos da validação:
 | `{{TITULO}}`, `{{abertura}}`, `{{NOME}}`, `{{cpf}}`, `{{rg}}`, `{{situacao}}`, `{{curso_destaque}}`, `{{extras}}` (dia de aula e carga horária, se houver) | | ✓ |
 
 Os textos que mudam por tipo são os mesmos da versão Python. A declaração não
-leva o endereço do aluno: o modelo segue de `{{rg}}` direto para `, {{situacao}}`.
+leva endereço: o modelo segue de `{{rg}}` direto para `, {{situacao}}`, e da
+escola fica só a cidade da sede.
 
 Por que tantos subfluxos: o WAF citado acima soma pontos pelo conteúdo do fluxo
 salvo. Barrou o nó Code junto com uma página HTML, duas telas HTML no mesmo

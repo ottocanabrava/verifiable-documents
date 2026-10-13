@@ -45,7 +45,8 @@ planilha, agrupados por `semestre`.
 completo tem uma segunda página com o conteúdo do curso; sem conteúdo
 cadastrado, ele não é gerado.
 
-As declarações não trazem o endereço do aluno, só CPF e RG.
+As declarações não trazem endereço: nem do aluno (só CPF e RG) nem da escola
+(só a cidade da sede).
 
 O certificado de semestre tem uma página só. A pedido, ganha a mesma segunda
 página, só com o conteúdo de um semestre: basta preencher `semestre_conteudo`

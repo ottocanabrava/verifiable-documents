@@ -20,7 +20,7 @@ MONTHS = (
 
 # Dados do emissor, lidos de ISSUER_<CHAVE> (ver .env.example).
 ISSUER_KEYS = (
-    "nome", "email", "site", "razao_social", "cnpj", "cidade", "endereco",
+    "nome", "email", "site", "razao_social", "cnpj", "cidade",
     "signatario", "cargo", "logo", "logo_branco", "assinatura",
 )
 

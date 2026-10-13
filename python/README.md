@@ -89,7 +89,7 @@ Copie `.env.example` para `.env` (já no `.gitignore`) e preencha.
 | `GOOGLE_APPLICATION_CREDENTIALS` | Opcional. Sem ela, usa a credencial padrão do Google (identidade do ambiente ou login local da CLI) |
 | `VALIDATION_BASE_URL` | URL pública da página de validação (vai no QR e no link do LinkedIn). Obrigatória para emitir |
 | `ISSUER_NOME`, `ISSUER_EMAIL`, `ISSUER_SITE` | Nome e contato da instituição |
-| `ISSUER_RAZAO_SOCIAL`, `ISSUER_CNPJ`, `ISSUER_CIDADE`, `ISSUER_ENDERECO` | Dados da mantenedora, usados nas declarações |
+| `ISSUER_RAZAO_SOCIAL`, `ISSUER_CNPJ`, `ISSUER_CIDADE` | Dados da mantenedora, usados nas declarações |
 | `ISSUER_SIGNATARIO`, `ISSUER_CARGO` | Quem assina |
 | `ISSUER_LOGO`, `ISSUER_LOGO_BRANCO`, `ISSUER_ASSINATURA` | Caminhos das imagens, **fora** do repositório (opcionais) |
 | `ADMIN_PASSWORD` | Senha da área `/emitir` |

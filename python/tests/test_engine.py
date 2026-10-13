@@ -13,7 +13,6 @@ ISSUER = {
     "razao_social": "Escola Exemplo Ltda",
     "cnpj": "00.000.000/0001-00",
     "cidade": "Cidade Exemplo/UF",
-    "endereco": "Rua das Flores, 100, Bairro: Centro, CEP 00.000-000",
     "signatario": "Ana Exemplo",
     "cargo": "Diretora Pedagógica",
 }
@@ -137,8 +136,9 @@ def test_declaracao_contem_campos_esperados():
         "Zr4tW8nLq2Ys",
     ):
         assert expected in text
-    # Endereço do aluno não entra na declaração, mesmo preenchido na planilha.
-    assert "FICTÍCIA" not in text.upper() and "residente" not in text
+    # Nem o endereço do aluno (mesmo preenchido na planilha) nem o da escola.
+    assert "FICTÍCIA" not in text.upper() and "residente" not in text and "sito na" not in text
+    assert "com sede na cidade de Cidade Exemplo/UF, declara, para os fins" in text
 
 
 @pytest.mark.parametrize("periodo", ["trimestre", "semestre"])

@@ -41,8 +41,7 @@ def body_text(record, issuer, abertura, situacao):
     return (
         f"{_b(issuer['razao_social'].upper())}, pessoa jurídica de direito privado, "
         f"mantenedora da {escape(issuer['nome'])}, inscrita no CNPJ sob o número "
-        f"{_b(issuer['cnpj'])}, com sede na cidade de {escape(issuer['cidade'])}, "
-        f"sito na {escape(issuer['endereco'])}, {abertura} "
+        f"{_b(issuer['cnpj'])}, com sede na cidade de {escape(issuer['cidade'])}, {abertura} "
         f"{_b(record['nome'].upper())}, inscrito(a) no CPF sob o número "
         f"{_b(record['cpf'])} e no RG {_b(record['rg'])}, {situacao} da instituição{extras}."
     )
