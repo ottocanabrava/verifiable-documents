@@ -10,6 +10,7 @@ from . import (
     certificado_trimestre,
     declaracao_matricula,
     declaracao_termino_semestre,
+    declaracao_termino_trimestre,
 )
 
 TEMPLATES = {
@@ -17,5 +18,6 @@ TEMPLATES = {
     "certificado_trimestre": certificado_trimestre,
     "certificado_semestre": certificado_semestre,
     "declaracao_matricula": declaracao_matricula,
+    "declaracao_termino_trimestre": declaracao_termino_trimestre,
     "declaracao_termino_semestre": declaracao_termino_semestre,
 }

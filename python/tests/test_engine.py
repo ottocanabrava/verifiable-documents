@@ -132,19 +132,21 @@ def test_declaracao_contem_campos_esperados():
         "00.000.000/0001-00",
         "JOÃO EXEMPLO SOUZA",
         "000.000.000-00",
-        "RUA FICTÍCIA, Nº 1",
         "matriculado(a) no curso de espanhol da instituição.",
         "Cidade Exemplo/UF, 14 de setembro de 2026",
         "Zr4tW8nLq2Ys",
     ):
         assert expected in text
+    # Endereço do aluno não entra na declaração, mesmo preenchido na planilha.
+    assert "FICTÍCIA" not in text.upper() and "residente" not in text
 
 
-def test_declaracao_termino_semestre():
-    record = {**DECLARACAO, "tipo_documento": "declaracao_termino_semestre", "curso": "Inglês"}
+@pytest.mark.parametrize("periodo", ["trimestre", "semestre"])
+def test_declaracao_termino_por_periodo(periodo):
+    record = {**DECLARACAO, "tipo_documento": f"declaracao_termino_{periodo}", "curso": "Inglês"}
     text = pdf_text(render(record, ISSUER))
-    assert "DECLARAÇÃO DE TÉRMINO DE SEMESTRE" in text
-    assert "declara que o semestre de JOÃO EXEMPLO SOUZA, inscrito(a) no CPF" in text
+    assert f"DECLARAÇÃO DE TÉRMINO DE {periodo.upper()}" in text
+    assert f"declara que o {periodo} de JOÃO EXEMPLO SOUZA, inscrito(a) no CPF" in text
     assert "foi concluído no CURSO DE INGLÊS da instituição." in text
 
 

@@ -123,7 +123,7 @@ documento** → uma destas saídas:
   `revogado_em`, `revogado_por` e `motivo_revogacao` na linha. Volta para a lista
   com o aviso. Os revogados mostram o motivo na lista (nunca na validação). A
   planilha precisa dessas três colunas no cabeçalho;
-- `?novo`: formulário de cadastro. CPF, RG, endereço e dia de aula só aparecem
+- `?novo`: formulário de cadastro. CPF, RG e dia de aula só aparecem
   quando o tipo é declaração (CSS, sem script). O envio (POST no mesmo
   endereço) passa pelas mesmas conferências da emissão, ganha um ID novo, é
   gravado na planilha como texto puro (**Anotar na planilha**) e volta para a
@@ -221,9 +221,10 @@ Para usar, além dos passos da validação:
 | `{{id}}`, `{{data}}` (por extenso) | ✓ | ✓ |
 | `{{nome}}`, `{{CURSO}}` (maiúsculas), `{{carga_horaria}}`, `{{conclusao}}` ("concluiu o semestre do curso de") | ✓ | |
 | 2ª página (conteúdo): `{{CURSO}}`, `{{introducao}}` (frase de abertura), `{{conteudo_1}}` e `{{conteudo_2}}` (uma caixa por coluna), `{{nome}}`, `{{id}}` | ✓ | |
-| `{{TITULO}}`, `{{abertura}}`, `{{NOME}}`, `{{cpf}}`, `{{rg}}`, `{{ENDERECO}}`, `{{situacao}}`, `{{curso_destaque}}`, `{{extras}}` (dia de aula e carga horária, se houver) | | ✓ |
+| `{{TITULO}}`, `{{abertura}}`, `{{NOME}}`, `{{cpf}}`, `{{rg}}`, `{{situacao}}`, `{{curso_destaque}}`, `{{extras}}` (dia de aula e carga horária, se houver) | | ✓ |
 
-Os textos que mudam por tipo são os mesmos da versão Python.
+Os textos que mudam por tipo são os mesmos da versão Python. A declaração não
+leva o endereço do aluno: o modelo segue de `{{rg}}` direto para `, {{situacao}}`.
 
 Por que tantos subfluxos: o WAF citado acima soma pontos pelo conteúdo do fluxo
 salvo. Barrou o nó Code junto com uma página HTML, duas telas HTML no mesmo

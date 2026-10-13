@@ -1,9 +1,9 @@
 """Layout da declaração de matrícula (A4 retrato).
 
-`draw_declaracao` também serve à declaração de término de semestre, que só
-muda título, abertura e situação do aluno.
+`draw_declaracao` também serve às declarações de término de trimestre e de
+semestre, que só mudam título, abertura e situação do aluno.
 
-Contém CPF, RG e endereço do aluno: a declaração é validável pelo ID, mas
+Contém CPF e RG do aluno: a declaração é validável pelo ID, mas
 o PDF é só para o emissor e nunca deve ser servido pela rota pública.
 """
 from xml.sax.saxutils import escape
@@ -19,7 +19,7 @@ from .certificado_curso import ACCENT, DEEP, MUTED, TEXT  # também registra a M
 
 NOME = "Declaração de matrícula"
 PAGE_SIZE = A4
-REQUIRED = ("nome", "curso", "cpf", "rg", "endereco")
+REQUIRED = ("nome", "curso", "cpf", "rg")
 
 registerFontFamily("Montserrat-Regular", normal="Montserrat-Regular", bold="Montserrat-Bold")  # <b> no Paragraph
 BODY = ParagraphStyle("body", fontName="Montserrat-Regular", fontSize=10, leading=19,
@@ -44,8 +44,7 @@ def body_text(record, issuer, abertura, situacao):
         f"{_b(issuer['cnpj'])}, com sede na cidade de {escape(issuer['cidade'])}, "
         f"sito na {escape(issuer['endereco'])}, {abertura} "
         f"{_b(record['nome'].upper())}, inscrito(a) no CPF sob o número "
-        f"{_b(record['cpf'])} e no RG {_b(record['rg'])}, residente e domiciliado(a) em "
-        f"{_b(record['endereco'].upper())}, {situacao} da instituição{extras}."
+        f"{_b(record['cpf'])} e no RG {_b(record['rg'])}, {situacao} da instituição{extras}."
     )
 
 
