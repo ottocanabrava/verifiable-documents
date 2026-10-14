@@ -21,6 +21,15 @@ Antes de escrever código, pare no primeiro degrau que resolve:
   segurança (rate limit, IDs não sequenciais, nada de CPF/e-mail na
   resposta), nem o que foi pedido explicitamente.
 
+Como usar:
+
+- antes de abrir um PR, rodar `/ponytail-review` no diff da branch;
+- numa revisão geral do projeto, rodar `/ponytail-audit`, que só gera o
+  relatório e não muda nada;
+- numa sessão na nuvem, o setup script precisa rodar
+  `claude plugin install ponytail@ponytail`: o registro no `settings.json`
+  só baixa o código, não instala o plugin.
+
 ## Estrutura
 
 - `docs/especificacao.md` é o contrato. Regra nova entra lá primeiro e depois
@@ -59,6 +68,8 @@ Antes de criar qualquer commit:
 - Conferir `git config user.name` e `git config user.email`: devem ser
   `ottocanabrava` e `ottocanabrava@gmail.com`. Se estiverem diferentes,
   corrigir a configuração local do repositório antes do commit.
+- Para corrigir: `git config user.name ottocanabrava` e
+  `git config user.email ottocanabrava@gmail.com`.
 - Nunca usar `Claude` nem `noreply@anthropic.com` como autor dos commits.
 - Não adicionar a linha `Co-Authored-By` do Claude na mensagem do commit.
 - Não reescrever commits antigos nem fazer push sem autorização explícita do Otto.
